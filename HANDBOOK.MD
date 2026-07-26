@@ -81,15 +81,16 @@
   * [x] 完成 7 月歷史資料輸入與舊帳戶零頭平帳。
   * [x] 本地專案建立與 Clasp clone 至 `Irrigation_Core` 資料夾。
   * [x] 完成 `Code.gs` 後端核心邏輯（`doGet`, `getAccountOptions`, `recordTransaction` API）。
-  * [x] 完成 `Index.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
+  * [x] 完成 `Index.html` / `form.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
   * [x] 完成 GitHub Pages 無標籤包裹層 (`index.html`)、嚴格防搜尋引擎收錄 (`robots.txt` & `meta robots`) 與「財富增值質感 3D App Icon` (Favicon / Apple Touch Icon)。
-* **目前停止位置**: 已完成 GAS Web App 第一版與 GitHub Pages 無標籤包裹層建置。
-* **下一步施工位置**: 開啟 GitHub Pages 服務，進行端到端 (E2E) 手機新增至主畫面極速記帳體驗驗收。
+  * [x] 修正 Windows / Linux 檔名大小寫相容問題（獨立 `index.html` 首頁與 `form.html` 表單）。
+* **目前停止位置**: 已完成 GAS Web App 第一版與 GitHub Pages 無標籤包裹層建置，包含檔名大小寫修正與 Clasp / Git 部署。
+* **下一步施工位置**: 進行端到端 (E2E) 手機新增至主畫面極速記帳體驗驗收。
 
 ---
 
 ## ⑩ Current Version
-`v0.3.0-beta` (無標籤 GitHub Pages 包裹與 PWA 財富 Icon 整合階段)
+`v0.3.1-beta` (解決跨平台檔名大小寫相容與無標籤 PWA 整合)
 
 ---
 
