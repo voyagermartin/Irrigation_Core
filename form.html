@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- 防搜尋引擎與爬蟲收錄 -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+  
+  <title>Irrigation_Core 資金調度系統</title>
+  
+  <!-- 感覺會賺錢的 App 圖示與 Favicon -->
+  <link rel="icon" type="image/png" href="https://voyagermartin.github.io/Irrigation_Core/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://voyagermartin.github.io/Irrigation_Core/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Irrigation">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent-primary: #6366f1;
+      --accent-hover: #4f46e5;
+      --income-color: #10b981;
+      --expense-color: #ef4444;
+      --transfer-color: #06b6d4;
+      --input-bg: rgba(15, 23, 42, 0.6);
+      --input-border: rgba(255, 255, 255, 0.15);
+      --input-focus: #818cf8;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      color: var(--text-primary);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 16px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Header Styling */
+    .app-header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-top: 8px;
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .app-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Main Card Container */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Mode Selector Tabs */
+    .mode-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-field, .select-field {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .select-field option {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+
+    .input-field:focus, .select-field:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+    }
+
+    /* Type Switcher (Single Mode) */
+    .type-switcher {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .type-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-md);
+      background: var(--input-bg);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .type-btn.active[data-type="expense"] {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--expense-color);
+      color: #fca5a5;
+    }
+
+    .type-btn.active[data-type="income"] {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--income-color);
+      color: #6ee7b7;
+    }
+
+    /* Section Cards for Transfer Mode */
+    .account-section {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+
+    .account-section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .account-section-title.from {
+      color: #fca5a5;
+    }
+
+    .account-section-title.to {
+      color: #6ee7b7;
+    }
+
+    .select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Amount Input Group */
+    .amount-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .amount-prefix {
+      position: absolute;
+      left: 14px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .amount-input {
+      padding-left: 36px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+      transition: all 0.25s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .submit-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Loading Overlay / Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.success {
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Helper utility classes */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="app-header">
+      <h1 class="app-title">Irrigation_Core</h1>
+      <p class="app-subtitle">個人自動化資產與資金調度系統</p>
+    </div>
+
+    <div class="card">
+      <!-- 模式切換 -->
+      <div class="mode-tabs">
+        <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
+        <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
+      </div>
+
+      <form id="tx-form" onsubmit="handleFormSubmit(event)">
+        <!-- 交易日期 -->
+        <div class="form-group">
+          <label class="form-label" for="tx-date">交易日期</label>
+          <input type="date" id="tx-date" class="input-field" required>
+        </div>
+
+        <!-- ================= 單筆記帳 模式表單 ================= -->
+        <div id="single-mode-fields">
+          <div class="form-group">
+            <label class="form-label">交易類型</label>
+            <div class="type-switcher">
+              <button type="button" class="type-btn active" data-type="expense" onclick="switchType('expense')">支出 (-)</button>
+              <button type="button" class="type-btn" data-type="income" onclick="switchType('income')">收入 (+)</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">選擇帳戶 (銀行 / 類別 / 名目)</label>
+            <div class="select-grid">
+              <select id="single-bank" class="select-field" onchange="onSingleBankChange()" required>
+                <option value="">讀取銀行中...</option>
+              </select>
+              <select id="single-account" class="select-field" onchange="onSingleAccountChange()" required disabled>
+                <option value="">選擇戶頭</option>
+              </select>
+            </div>
+            <select id="single-purpose" class="select-field" style="margin-top: 8px;" required disabled>
+              <option value="">選擇名目用途</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ================= 資金平移 模式表單 ================= -->
+        <div id="transfer-mode-fields" class="hidden">
+          <!-- 轉出帳戶 -->
+          <div class="account-section">
+            <div class="account-section-title from">
+              <span>📤 轉出帳戶 (扣款)</span>
+            </div>
+            <div class="select-grid">
+              <select id="from-bank" class="select-field" onchange="onFromBankChange()">
+                <option value="">讀取銀行中...</option>
+              </select>
+              <select id="from-account" class="select-field" onchange="onFromAccountChange()" disabled>
+                <option value="">選擇戶頭</option>
+              </select>
+            </div>
+            <select id="from-purpose" class="select-field" style="margin-top: 8px;" disabled>
+              <option value="">選擇名目用途</option>
+            </select>
+          </div>
+
+          <!-- 轉入帳戶 -->
+          <div class="account-section">
+            <div class="account-section-title to">
+              <span>📥 轉入帳戶 (撥入)</span>
+            </div>
+            <div class="select-grid">
+              <select id="to-bank" class="select-field" onchange="onToBankChange()">
+                <option value="">讀取銀行中...</option>
+              </select>
+              <select id="to-account" class="select-field" onchange="onToAccountChange()" disabled>
+                <option value="">選擇戶頭</option>
+              </select>
+            </div>
+            <select id="to-purpose" class="select-field" style="margin-top: 8px;" disabled>
+              <option value="">選擇名目用途</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 金額 -->
+        <div class="form-group">
+          <label class="form-label" for="tx-amount">交易金額</label>
+          <div class="amount-input-wrapper">
+            <span class="amount-prefix">$</span>
+            <input type="number" id="tx-amount" class="input-field amount-input" placeholder="0" min="1" step="any" required>
+          </div>
+        </div>
+
+        <!-- 項目說明 -->
+        <div class="form-group">
+          <label class="form-label" for="tx-desc">交易項目說明 (選填)</label>
+          <input type="text" id="tx-desc" class="input-field" placeholder="例如：7月利息 / 儲蓄提撥">
+        </div>
+
+        <!-- 送出按鈕 -->
+        <button type="submit" id="submit-btn" class="submit-btn">
+          <span id="btn-text">確認寫入交易</span>
+          <div id="btn-spinner" class="spinner hidden"></div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast 訊息通知 -->
+  <div id="toast" class="toast">
+    <span id="toast-msg">提示訊息</span>
+  </div>
+
+  <script>
+    // 全域狀態
+    let currentMode = 'single'; // 'single' | 'transfer'
+    let currentType = 'expense'; // 'expense' | 'income'
+    let accountRawData = [];
+
+    // 初始化頁面
+    window.addEventListener('DOMContentLoaded', () => {
+      // 設定預設日期為今天
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tx-date').value = today;
+
+      // 載入帳戶選單
+      loadAccountOptions();
+    });
+
+    // 切換模式 (單筆 / 資金平移)
+    function switchMode(mode) {
+      currentMode = mode;
+      document.getElementById('tab-single').classList.toggle('active', mode === 'single');
+      document.getElementById('tab-transfer').classList.toggle('active', mode === 'transfer');
+
+      const singleFields = document.getElementById('single-mode-fields');
+      const transferFields = document.getElementById('transfer-mode-fields');
+
+      if (mode === 'single') {
+        singleFields.classList.remove('hidden');
+        transferFields.classList.add('hidden');
+        document.getElementById('single-bank').required = true;
+        document.getElementById('single-account').required = true;
+        document.getElementById('single-purpose').required = true;
+
+        document.getElementById('from-bank').required = false;
+        document.getElementById('from-account').required = false;
+        document.getElementById('from-purpose').required = false;
+        document.getElementById('to-bank').required = false;
+        document.getElementById('to-account').required = false;
+        document.getElementById('to-purpose').required = false;
+      } else {
+        singleFields.classList.add('hidden');
+        transferFields.classList.remove('hidden');
+        document.getElementById('single-bank').required = false;
+        document.getElementById('single-account').required = false;
+        document.getElementById('single-purpose').required = false;
+
+        document.getElementById('from-bank').required = true;
+        document.getElementById('from-account').required = true;
+        document.getElementById('from-purpose').required = true;
+        document.getElementById('to-bank').required = true;
+        document.getElementById('to-account').required = true;
+        document.getElementById('to-purpose').required = true;
+      }
+    }
+
+    // 切換收支類型 (單筆模式)
+    function switchType(type) {
+      currentType = type;
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+    }
+
+    // 呼叫 GAS 後端取得帳戶選單
+    function loadAccountOptions() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(onAccountOptionsLoaded)
+          .withFailureHandler(onAccountOptionsFailed)
+          .getAccountOptions();
+      } else {
+        console.warn('未檢測到 Google Apps Script 環境');
+      }
+    }
+
+    function onAccountOptionsLoaded(response) {
+      if (!response || !response.success) {
+        showToast(response ? response.error : '載入帳戶選單失敗', 'error');
+        return;
+      }
+
+      accountRawData = response.data || [];
+      populateBankSelects();
+    }
+
+    function onAccountOptionsFailed(error) {
+      showToast('後端連線失敗: ' + (error.message || error), 'error');
+    }
+
+    // 填充所有銀行選單
+    function populateBankSelects() {
+      const banks = [...new Set(accountRawData.map(item => item.bank))];
+
+      const bankOptionsHTML = '<option value="">請選擇銀行</option>' +
+        banks.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      ['single-bank', 'from-bank', 'to-bank'].forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) elem.innerHTML = bankOptionsHTML;
+      });
+    }
+
+    // ================= 動態連動觸發邏輯 =================
+    function onSingleBankChange() {
+      const bank = document.getElementById('single-bank').value;
+      updateAccountOptions(bank, 'single-account', 'single-purpose');
+    }
+
+    function onSingleAccountChange() {
+      const bank = document.getElementById('single-bank').value;
+      const account = document.getElementById('single-account').value;
+      updatePurposeOptions(bank, account, 'single-purpose');
+    }
+
+    function onFromBankChange() {
+      const bank = document.getElementById('from-bank').value;
+      updateAccountOptions(bank, 'from-account', 'from-purpose');
+    }
+
+    function onFromAccountChange() {
+      const bank = document.getElementById('from-bank').value;
+      const account = document.getElementById('from-account').value;
+      updatePurposeOptions(bank, account, 'from-purpose');
+    }
+
+    function onToBankChange() {
+      const bank = document.getElementById('to-bank').value;
+      updateAccountOptions(bank, 'to-account', 'to-purpose');
+    }
+
+    function onToAccountChange() {
+      const bank = document.getElementById('to-bank').value;
+      const account = document.getElementById('to-account').value;
+      updatePurposeOptions(bank, account, 'to-purpose');
+    }
+
+    function updateAccountOptions(selectedBank, accountElemId, purposeElemId) {
+      const accountElem = document.getElementById(accountElemId);
+      const purposeElem = document.getElementById(purposeElemId);
+
+      purposeElem.innerHTML = '<option value="">選擇名目用途</option>';
+      purposeElem.disabled = true;
+
+      if (!selectedBank) {
+        accountElem.innerHTML = '<option value="">選擇戶頭</option>';
+        accountElem.disabled = true;
+        return;
+      }
+
+      const filteredAccounts = [...new Set(
+        accountRawData
+          .filter(item => item.bank === selectedBank)
+          .map(item => item.account)
+      )];
+
+      accountElem.innerHTML = '<option value="">選擇戶頭</option>' +
+        filteredAccounts.map(a => `<option value="${a}">${a}</option>`).join('');
+      accountElem.disabled = false;
+    }
+
+    function updatePurposeOptions(selectedBank, selectedAccount, purposeElemId) {
+      const purposeElem = document.getElementById(purposeElemId);
+
+      if (!selectedBank || !selectedAccount) {
+        purposeElem.innerHTML = '<option value="">選擇名目用途</option>';
+        purposeElem.disabled = true;
+        return;
+      }
+
+      const filteredPurposes = [...new Set(
+        accountRawData
+          .filter(item => item.bank === selectedBank && item.account === selectedAccount)
+          .map(item => item.purpose)
+      )];
+
+      purposeElem.innerHTML = '<option value="">選擇名目用途</option>' +
+        filteredPurposes.map(p => `<option value="${p}">${p}</option>`).join('');
+      purposeElem.disabled = false;
+    }
+
+    // 表單送出處理
+    function handleFormSubmit(event) {
+      event.preventDefault();
+
+      const rawDate = document.getElementById('tx-date').value;
+      const date = rawDate ? rawDate.replace(/-/g, '/') : '';
+      const amount = document.getElementById('tx-amount').value;
+      const description = document.getElementById('tx-desc').value.trim();
+
+      let payload = {
+        mode: currentMode,
+        date: date,
+        amount: amount,
+        description: description
+      };
+
+      if (currentMode === 'single') {
+        payload.type = currentType;
+        payload.bank = document.getElementById('single-bank').value;
+        payload.account = document.getElementById('single-account').value;
+        payload.purpose = document.getElementById('single-purpose').value;
+      } else {
+        payload.fromBank = document.getElementById('from-bank').value;
+        payload.fromAccount = document.getElementById('from-account').value;
+        payload.fromPurpose = document.getElementById('from-purpose').value;
+        payload.toBank = document.getElementById('to-bank').value;
+        payload.toAccount = document.getElementById('to-account').value;
+        payload.toPurpose = document.getElementById('to-purpose').value;
+
+        if (payload.fromBank === payload.toBank &&
+            payload.fromAccount === payload.toAccount &&
+            payload.fromPurpose === payload.toPurpose) {
+          showToast('轉出與轉入帳戶不能完全相同', 'error');
+          return;
+        }
+      }
+
+      setSubmittingState(true);
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(onRecordSuccess)
+          .withFailureHandler(onRecordFailed)
+          .recordTransaction(payload);
+      } else {
+        setTimeout(() => {
+          onRecordSuccess({ success: true, message: '（模擬）交易已成功寫入！' });
+        }, 1000);
+      }
+    }
+
+    function onRecordSuccess(response) {
+      setSubmittingState(false);
+      if (response && response.success) {
+        showToast(response.message || '寫入成功！', 'success');
+        document.getElementById('tx-amount').value = '';
+        document.getElementById('tx-desc').value = '';
+      } else {
+        showToast(response ? response.error : '寫入失敗', 'error');
+      }
+    }
+
+    function onRecordFailed(error) {
+      setSubmittingState(false);
+      showToast('寫入失敗: ' + (error.message || error), 'error');
+    }
+
+    function setSubmittingState(isSubmitting) {
+      const submitBtn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      submitBtn.disabled = isSubmitting;
+      if (isSubmitting) {
+        btnText.textContent = '處理中...';
+        btnSpinner.classList.remove('hidden');
+      } else {
+        btnText.textContent = '確認寫入交易';
+        btnSpinner.classList.add('hidden');
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+
+      toastMsg.textContent = message;
+      toast.className = `toast ${type} show`;
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+  </script>
+</body>
+</html>

@@ -13,7 +13,7 @@ const SHEET_NAMES = {
  * HTTP GET 請求入口，渲染 Web App 主頁面
  */
 function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile('Index')
+  return HtmlService.createHtmlOutputFromFile('form')
     .setTitle('Irrigation_Core 資金調度系統')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
