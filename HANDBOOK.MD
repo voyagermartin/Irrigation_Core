@@ -10,8 +10,11 @@
 ## ② System Architecture
 * **數據層 (Database)**: Google Sheets（儲存日常流水帳與帳戶資產主檔）。
 * **邏輯/運算層 (Backend)**: Google Apps Script (GAS)（處理 Web App HTTP 請求、選單資料拉取與試算表讀寫）。
-* **使用者介面層 (Frontend/UI)**: GAS Web App (HTML/CSS/JS)（支援手機與桌面板，具備動態下拉選單與資金平移模式）。
-* **開發環境 (DevOps)**: 本地 IDE + Clasp/Git (Antigravity) <-> Google Apps Script Cloud.
+* **使用者介面層 (Frontend/UI)**: 
+  * GitHub Pages 無標籤包裹層 (`index.html`)：提供無警告橫幅之全螢幕極致體驗。
+  * GAS Web App 表單 (`form.html`)：Mobile-First 現代介面，具備動態下拉選單與資金平移模式。
+* **隱私/防護層 (Security/Privacy)**: `robots.txt` + `meta robots` 嚴格禁止所有搜尋引擎與爬蟲索引/收錄。
+* **開發環境 (DevOps)**: 本地 IDE + Clasp/Git (Antigravity) <-> Google Apps Script Cloud & GitHub Pages.
 
 ---
 
@@ -37,7 +40,7 @@
 ---
 
 ## ④ Function Library
-* `doGet(e)`: 渲染 Web App 主頁面 (`Index.html`)。
+* `doGet(e)`: 渲染 Web App 主頁面 (`form.html`)。
 * `getAccountOptions()`: 讀取「5. 帳戶資產淨值表」A/B/C 欄 (從第 5 列起)，打包為動態連動選單 JSON。
 * `recordTransaction(payload)`: 處理單筆記帳與資金平移（雙筆紀錄），寫入「4. 儲蓄與分配紀錄」。
 
@@ -58,11 +61,16 @@
 ---
 
 ## ⑦ Dashboard / UI
-* **GAS Web App 表單**:
+* **GitHub Pages 無標籤包裹層 (`index.html`)**:
+  * 徹底遮罩 GAS 官方預設之警告橫幅。
+  * 支援 iOS/Android PWA 「新增至主畫面」全螢幕體驗。
+  * 配置「3D 財富金幣 + 翡翠水滴」質感 App Icon (`favicon.png` / `apple-touch-icon.png`)。
+  * 具備 GAS Web App 網址自動記憶與重新設定機制。
+* **GAS Web App 表單 (`form.html`)**:
   * 包含模式切換按鈕：`[單筆記帳]` / `[資金平移]`。
-  * 動態連動下拉選單（銀行 -> 帳戶 -> 名目）。
+  * 動態三階連動下拉選單（銀行 -> 帳戶 -> 名目用途）。
   * 輸入欄位：交易日期、金額、項目說明。
-  * 手機優化 Web 介面。
+  * 支援同帳戶轉帳防呆與非同步 Toast 提示。
 
 ---
 
@@ -75,27 +83,39 @@
 ---
 
 ## ⑨ Current Sprint
-* **Sprint 目標**: 建立第一個版本的 GAS Web App（`Code.gs` 與 `Index.html`），實現下拉選單拉取與資料寫入分頁 4。
+* **Sprint 目標**: 建立第一版 Web App、GitHub Pages 無標籤包裹層並上線。
 * **已完成項目**:
   * [x] 完成試算表分頁 4 與分頁 5 的架構大洗牌與 `SUMIFS` 核心公式對齊。
   * [x] 完成 7 月歷史資料輸入與舊帳戶零頭平帳。
   * [x] 本地專案建立與 Clasp clone 至 `Irrigation_Core` 資料夾。
   * [x] 完成 `Code.gs` 後端核心邏輯（`doGet`, `getAccountOptions`, `recordTransaction` API）。
-  * [x] 完成 `Index.html` / `form.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
-  * [x] 完成 GitHub Pages 無標籤包裹層 (`index.html`)、嚴格防搜尋引擎收錄 (`robots.txt` & `meta robots`) 與「財富增值質感 3D App Icon` (Favicon / Apple Touch Icon)。
-  * [x] 修正 Windows / Linux 檔名大小寫相容問題（獨立 `index.html` 首頁與 `form.html` 表單）。
-* **目前停止位置**: 已完成 GAS Web App 第一版與 GitHub Pages 無標籤包裹層建置，包含檔名大小寫修正與 Clasp / Git 部署。
-* **下一步施工位置**: 進行端到端 (E2E) 手機新增至主畫面極速記帳體驗驗收。
+  * [x] 完成 `form.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
+  * [x] 完成 GitHub Pages 無標籤包裹層 (`index.html`)、嚴格防搜尋引擎收錄 (`robots.txt` & `meta robots`) 與 3D 財富 App Icon (`favicon.png` / `apple-touch-icon.png`)。
+  * [x] 修正跨平台檔名大小寫問題，完成 GitHub Pages 部署與端到端 (E2E) 測試驗收。
+* **目前停止位置**: 已完成全套系統建置、部署與驗收。
+* **下一步施工位置**: 日常營運體驗維護與手機桌面捷徑使用。
 
 ---
 
 ## ⑩ Current Version
-`v0.3.1-beta` (解決跨平台檔名大小寫相容與無標籤 PWA 整合)
+`v1.0.0` (第一版正式發布階段)
 
 ---
 
 ## ⑪ Roadmap
 * **Milestone 1**: GAS 後端 API 開發（`Code.gs` 讀取分頁 5 選單 & 寫入分頁 4）。
-* **Milestone 2**: HTML/JS 前端 UI 開發（`Index.html`，支援單筆與資金平移切換）。
-* **Milestone 3**: 部署 Web App，進行端到端（E2E）實測驗收。
+* **Milestone 2**: HTML/JS 前端 UI 開發（`form.html`，支援單筆與資金平移切換）。
+* **Milestone 3**: 部署 Web App 與 GitHub Pages 無標籤包裹層，進行 E2E 驗收。
 * **Milestone 4**: 手機桌面捷徑整合與日常營運體驗優化。
+
+---
+
+## ⑫ Development Log
+### 2026/07/26
+* **專案起頭與環境建置**：完成本地 `Irrigation_Core` 專案初始化、Git / GitHub 遠端倉庫綁定與 Clasp 環境 Clone。
+* **Handbook 建立**：建立專案規格手冊 [HANDBOOK.MD](file:///f:/Projects/Irrigation_Core/HANDBOOK.MD)，收錄二維架構、Database Schema 與公式規範。
+* **後端邏輯開發 (Code.gs)**：實作 `doGet` (渲染 `form.html`)、`getAccountOptions` (動態選單 JSON) 與 `recordTransaction` (單筆及資金平移拆解寫入分頁 4)。
+* **前端 UI 開發 (form.html)**：打造 Mobile-First 玻璃擬物風格 UI，支援「單筆記帳」與「資金平移」雙模式切換、動態三階連動下拉選單、防呆與非同步 Toast 提示。
+* **無標籤 GitHub Pages 包裹層 (index.html)**：建立 GitHub Pages 獨立包裹層，徹底蓋住 GAS 官方預設警告標籤。
+* **隱私防護與 3D 財富 Icon**：配置 `robots.txt` 與 `meta robots` 嚴格禁止搜尋引擎收錄；設計「3D 財富金幣 + 翡翠水滴」App Icon (`favicon.png`, `apple-touch-icon.png`)。
+* **跨平台檔名大小寫修復**：解決 Windows 與 Linux 大小寫檔名相容問題，將 GitHub Pages 首頁強行正名為全小寫 `index.html`，順利解決 404 問題並完成端到端 (E2E) 測試驗收。
