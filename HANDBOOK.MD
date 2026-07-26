@@ -37,10 +37,9 @@
 ---
 
 ## ④ Function Library
-*(尚未新增程式碼，待 Current Sprint 建立後寫入)*
-* 預留 `doGet()`: 渲染 Web App 主頁面。
-* 預留 `getAccountOptions()`: 讀取分頁 5 A/B/C 欄作為 Web App 選單資料源。
-* 預留 `recordTransaction()`: 寫入單筆或資金平移資料至分頁 4。
+* `doGet(e)`: 渲染 Web App 主頁面 (`Index.html`)。
+* `getAccountOptions()`: 讀取「5. 帳戶資產淨值表」A/B/C 欄 (從第 5 列起)，打包為動態連動選單 JSON。
+* `recordTransaction(payload)`: 處理單筆記帳與資金平移（雙筆紀錄），寫入「4. 儲蓄與分配紀錄」。
 
 ---
 
@@ -81,8 +80,9 @@
   * [x] 完成試算表分頁 4 與分頁 5 的架構大洗牌與 `SUMIFS` 核心公式對齊。
   * [x] 完成 7 月歷史資料輸入與舊帳戶零頭平帳。
   * [x] 本地專案建立與 Clasp clone 至 `Irrigation_Core` 資料夾。
-* **目前停止位置**: 已完成專案命名與本地專案環境 Clone，尚未建立 `Code.gs` 核心邏輯。
-* **下一步施工位置**: 撰寫 `Code.gs` 後端核心邏輯（包含 `doGet` 與讀取分頁 5 下拉選單選單 API）。
+  * [x] 完成 `Code.gs` 後端核心邏輯（`doGet`, `getAccountOptions`, `recordTransaction` API）。
+* **目前停止位置**: 已完成 `Code.gs` 後端邏輯建立與 Clasp Push。
+* **下一步施工位置**: 建立 `Index.html` 前端介面（支援動態下拉選單拉取、單筆/資金平移模式切換與表單送出）。
 
 ---
 
