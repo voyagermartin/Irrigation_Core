@@ -82,13 +82,14 @@
   * [x] 本地專案建立與 Clasp clone 至 `Irrigation_Core` 資料夾。
   * [x] 完成 `Code.gs` 後端核心邏輯（`doGet`, `getAccountOptions`, `recordTransaction` API）。
   * [x] 完成 `Index.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
-* **目前停止位置**: 已完成 GAS Web App 第一版（`Code.gs` & `Index.html`）開發與 Clasp Push。
-* **下一步施工位置**: 部署 GAS Web App 並進行端到端（E2E）實測驗收。
+  * [x] 完成 GitHub Pages 無標籤包裹層 (`index.html`)、嚴格防搜尋引擎收錄 (`robots.txt` & `meta robots`) 與「財富增值質感 3D App Icon` (Favicon / Apple Touch Icon)。
+* **目前停止位置**: 已完成 GAS Web App 第一版與 GitHub Pages 無標籤包裹層建置。
+* **下一步施工位置**: 開啟 GitHub Pages 服務，進行端到端 (E2E) 手機新增至主畫面極速記帳體驗驗收。
 
 ---
 
 ## ⑩ Current Version
-`v0.2.0-beta` (Web App 前後端 MVP 功能完成階段)
+`v0.3.0-beta` (無標籤 GitHub Pages 包裹與 PWA 財富 Icon 整合階段)
 
 ---
 
