@@ -81,13 +81,14 @@
   * [x] 完成 7 月歷史資料輸入與舊帳戶零頭平帳。
   * [x] 本地專案建立與 Clasp clone 至 `Irrigation_Core` 資料夾。
   * [x] 完成 `Code.gs` 後端核心邏輯（`doGet`, `getAccountOptions`, `recordTransaction` API）。
-* **目前停止位置**: 已完成 `Code.gs` 後端邏輯建立與 Clasp Push。
-* **下一步施工位置**: 建立 `Index.html` 前端介面（支援動態下拉選單拉取、單筆/資金平移模式切換與表單送出）。
+  * [x] 完成 `Index.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
+* **目前停止位置**: 已完成 GAS Web App 第一版（`Code.gs` & `Index.html`）開發與 Clasp Push。
+* **下一步施工位置**: 部署 GAS Web App 並進行端到端（E2E）實測驗收。
 
 ---
 
 ## ⑩ Current Version
-`v0.1.0-alpha` (環境建置與 Schema 確定階段)
+`v0.2.0-beta` (Web App 前後端 MVP 功能完成階段)
 
 ---
 
