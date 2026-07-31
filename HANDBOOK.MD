@@ -9,11 +9,11 @@
 
 ## ② System Architecture
 * **數據層 (Database)**: Google Sheets（儲存日常流水帳與帳戶資產主檔）。
-* **邏輯/運算層 (Backend)**: Google Apps Script (GAS)（處理 Web App HTTP 請求、選單資料拉取與試算表讀寫）。
+* **邏輯/運算層 (Backend)**: Google Apps Script (GAS)（處理 Web App HTTP 請求、選單資料拉取、當前餘額算術與試算表讀寫）。
 * **使用者介面層 (Frontend/UI)**: 
   * GitHub Pages 無標籤包裹層 (`index.html`)：提供無警告橫幅之全螢幕極致體驗。
-  * GAS Web App 表單 (`form.html`)：Mobile-First 現代介面，具備動態下拉選單與資金平移模式。
-* **隱私/防護層 (Security/Privacy)**: `robots.txt` + `meta robots` 嚴格禁止所有搜尋引擎與爬蟲索引/收錄。
+  * GAS Web App 表單 (`form.html`)：Mobile-First 現代介面，具備動態下拉選單、資金平移模式、即時餘額 Badge 與各帳戶餘額查詢。
+* **隱私/防護/權限層 (Security/Privacy)**: `robots.txt` + `meta robots` 嚴格禁止所有搜尋引擎與爬蟲索引/收錄；`appsscript.json` 配置 `ANYONE_ANONYMOUS` 免去第三方 Cookie 401 權限問題。
 * **開發環境 (DevOps)**: 本地 IDE + Clasp/Git (Antigravity) <-> Google Apps Script Cloud & GitHub Pages.
 
 ---
@@ -96,7 +96,8 @@
   * [x] 修正跨平台檔名大小寫問題，完成 GitHub Pages 部署與端到端 (E2E) 測試驗收。
   * [x] 完成 `Code.gs` 讀取 E 欄名目餘額與計算總資產淨值 API。
   * [x] 完成 `form.html` 增設 `[餘額查詢]` 模式頁籤、總資產淨值卡片、三階連動篩選器與記帳即時餘額 Badge。
-* **目前停止位置**: 已完成全套「餘額查詢」與「動態餘額顯示」功能升級。
+  * [x] 完成 `appsscript.json` 權限層修正 (`ANYONE_ANONYMOUS`) 與 Release `@4` 正式發布。
+* **目前停止位置**: 已完成全套「餘額查詢」與「動態餘額顯示」功能升級與發布。
 * **下一步施工位置**: 日常營運體驗維護與手機桌面捷徑使用。
 
 ---
@@ -125,7 +126,13 @@
 * **跨平台檔名大小寫修復**：解決 Windows 與 Linux 大小寫檔名相容問題，將 GitHub Pages 首頁強行正名為全小寫 `index.html`，順利解決 404 問題並完成端到端 (E2E) 測試驗收。
 
 ### 2026/07/31
-* **新增 .gitignore**：在根目錄新增 [.gitignore](file:///f:/Projects/Irrigation_Core/.gitignore)，排除 Python 暫存檔、虛擬環境、Node log 與系統暫存。
-* **後端餘額讀取 API 升級**：修改 `Code.gs` 之 `getAccountOptions()`，同步讀取分頁 5 之 E 欄「當前名目餘額」並計算總資產淨值。
-* **前端手機餘額查詢與即時提示**：在 `form.html` 擴充 `[餘額查詢]` 模式頁籤、總資產淨值卡片、手動一鍵刷新按鈕、三階連動下拉篩選器，並在記帳模式選定帳戶時自動顯示當前餘額 Badge。升級至 `v1.1.0`。
+* **新增 .gitignore 排除檔**：建立根目錄 [.gitignore](file:///f:/Projects/Irrigation_Core/.gitignore)，排除 Python 暫存檔 (`__pycache__`, `.venv`)、Node log 與編輯器設定。
+* **後端資產餘額 API 升級 (Code.gs)**：擴充 `getAccountOptions()` API 讀取「5. 帳戶資產淨值表」E 欄當前名目餘額與加總 `totalNetWorth` 總資產金額。
+* **前端手機端餘額查詢與即時提示 (form.html)**：
+  * 新增 `[餘額查詢]` 模式頁籤、💎 總資產淨值卡片與 🔄 手動一鍵刷新按鈕。
+  * 提供與記帳模式一致的三階連動下拉選單（銀行 ➔ 戶頭 ➔ 名目用途）篩選過濾卡片清單。
+  * 記帳模式選定帳戶時動態浮現當前餘額提示 Badge。
+* **GAS 權限與多重帳號修復 (appsscript.json)**：新增 `webapp` 清單屬性，設定 `access: ANYONE_ANONYMOUS` 解決跨站 iframe 401 錯誤與 Google 第三方 Cookie 限制。
+* **正式發布與部署**：執行 `clasp push` / `clasp deploy` 發布至 Release `@4` 並完成 Git 提交推送到 GitHub。
+
 
