@@ -41,7 +41,7 @@
 
 ## ④ Function Library
 * `doGet(e)`: 渲染 Web App 主頁面 (`form.html`)。
-* `getAccountOptions()`: 讀取「5. 帳戶資產淨值表」A/B/C 欄 (從第 5 列起)，打包為動態連動選單 JSON。
+* `getAccountOptions()`: 讀取「5. 帳戶資產淨值表」A~E 欄 (從第 5 列起)，打包為包含當前餘額與總資產淨值之動態 JSON (`{ data, totalNetWorth }`)。
 * `recordTransaction(payload)`: 處理單筆記帳與資金平移（雙筆紀錄），寫入「4. 儲蓄與分配紀錄」。
 
 ---
@@ -67,8 +67,10 @@
   * 配置「3D 財富金幣 + 翡翠水滴」質感 App Icon (`favicon.png` / `apple-touch-icon.png`)。
   * 具備 GAS Web App 網址自動記憶與重新設定機制。
 * **GAS Web App 表單 (`form.html`)**:
-  * 包含模式切換按鈕：`[單筆記帳]` / `[資金平移]`。
+  * 包含模式切換按鈕：`[單筆記帳]` / `[資金平移]` / `[餘額查詢]`。
   * 動態三階連動下拉選單（銀行 -> 帳戶 -> 名目用途）。
+  * 記帳選擇帳戶時自動浮現該帳戶之「當前餘額」動態提示 Badge。
+  * 「餘額查詢」分頁：包含總資產淨值卡片、一鍵手動刷新按鈕、三階連動下拉選單篩選器與餘額卡片列表。
   * 輸入欄位：交易日期、金額、項目說明。
   * 支援同帳戶轉帳防呆與非同步 Toast 提示。
 
@@ -83,7 +85,7 @@
 ---
 
 ## ⑨ Current Sprint
-* **Sprint 目標**: 建立第一版 Web App、GitHub Pages 無標籤包裹層並上線。
+* **Sprint 目標**: 擴充手機端「餘額查詢」功能與動態即時餘額顯示。
 * **已完成項目**:
   * [x] 完成試算表分頁 4 與分頁 5 的架構大洗牌與 `SUMIFS` 核心公式對齊。
   * [x] 完成 7 月歷史資料輸入與舊帳戶零頭平帳。
@@ -92,13 +94,15 @@
   * [x] 完成 `form.html` 前端介面（雙模式切換、動態連動下拉選單、防呆與非同步送出）。
   * [x] 完成 GitHub Pages 無標籤包裹層 (`index.html`)、嚴格防搜尋引擎收錄 (`robots.txt` & `meta robots`) 與 3D 財富 App Icon (`favicon.png` / `apple-touch-icon.png`)。
   * [x] 修正跨平台檔名大小寫問題，完成 GitHub Pages 部署與端到端 (E2E) 測試驗收。
-* **目前停止位置**: 已完成全套系統建置、部署與驗收。
+  * [x] 完成 `Code.gs` 讀取 E 欄名目餘額與計算總資產淨值 API。
+  * [x] 完成 `form.html` 增設 `[餘額查詢]` 模式頁籤、總資產淨值卡片、三階連動篩選器與記帳即時餘額 Badge。
+* **目前停止位置**: 已完成全套「餘額查詢」與「動態餘額顯示」功能升級。
 * **下一步施工位置**: 日常營運體驗維護與手機桌面捷徑使用。
 
 ---
 
 ## ⑩ Current Version
-`v1.0.0` (第一版正式發布階段)
+`v1.1.0` (新增手機端餘額查詢與即時餘額顯示)
 
 ---
 
@@ -106,7 +110,7 @@
 * **Milestone 1**: GAS 後端 API 開發（`Code.gs` 讀取分頁 5 選單 & 寫入分頁 4）。
 * **Milestone 2**: HTML/JS 前端 UI 開發（`form.html`，支援單筆與資金平移切換）。
 * **Milestone 3**: 部署 Web App 與 GitHub Pages 無標籤包裹層，進行 E2E 驗收。
-* **Milestone 4**: 手機桌面捷徑整合與日常營運體驗優化。
+* **Milestone 4**: 手機端隨時查詢各銀行/戶頭/名目用途餘額與動態即時餘額顯示 (`v1.1.0`)。
 
 ---
 
@@ -119,3 +123,9 @@
 * **無標籤 GitHub Pages 包裹層 (index.html)**：建立 GitHub Pages 獨立包裹層，徹底蓋住 GAS 官方預設警告標籤。
 * **隱私防護與 3D 財富 Icon**：配置 `robots.txt` 與 `meta robots` 嚴格禁止搜尋引擎收錄；設計「3D 財富金幣 + 翡翠水滴」App Icon (`favicon.png`, `apple-touch-icon.png`)。
 * **跨平台檔名大小寫修復**：解決 Windows 與 Linux 大小寫檔名相容問題，將 GitHub Pages 首頁強行正名為全小寫 `index.html`，順利解決 404 問題並完成端到端 (E2E) 測試驗收。
+
+### 2026/07/31
+* **新增 .gitignore**：在根目錄新增 [.gitignore](file:///f:/Projects/Irrigation_Core/.gitignore)，排除 Python 暫存檔、虛擬環境、Node log 與系統暫存。
+* **後端餘額讀取 API 升級**：修改 `Code.gs` 之 `getAccountOptions()`，同步讀取分頁 5 之 E 欄「當前名目餘額」並計算總資產淨值。
+* **前端手機餘額查詢與即時提示**：在 `form.html` 擴充 `[餘額查詢]` 模式頁籤、總資產淨值卡片、手動一鍵刷新按鈕、三階連動下拉篩選器，並在記帳模式選定帳戶時自動顯示當前餘額 Badge。升級至 `v1.1.0`。
+

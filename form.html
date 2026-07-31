@@ -333,6 +333,184 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Balance Badge for Input Forms */
+    .balance-badge {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(129, 140, 248, 0.25);
+      border-radius: var(--radius-sm);
+      font-size: 0.825rem;
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .balance-badge-val {
+      font-weight: 700;
+      color: #34d399;
+      font-size: 0.9rem;
+    }
+
+    .balance-badge-val.negative {
+      color: #fca5a5;
+    }
+
+    /* Total Net Worth Card */
+    .total-worth-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .total-worth-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .total-worth-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .refresh-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .refresh-btn:active {
+      transform: scale(0.9);
+    }
+
+    .total-worth-amount {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #34d399;
+      letter-spacing: -0.5px;
+    }
+
+    /* Filter Section in Balance View */
+    .filter-section {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .filter-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    /* Balance List Cards */
+    .balance-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .balance-item-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .balance-item-card:hover {
+      border-color: rgba(129, 140, 248, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    .balance-item-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .balance-item-bank {
+      font-size: 0.925rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .balance-item-meta {
+      font-size: 0.775rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .tag-account {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.725rem;
+      font-weight: 600;
+    }
+
+    .tag-purpose {
+      background: rgba(6, 182, 212, 0.2);
+      color: #67e8f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.725rem;
+      font-weight: 600;
+    }
+
+    .balance-item-right {
+      text-align: right;
+    }
+
+    .balance-item-val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #34d399;
+    }
+
+    .balance-item-val.negative {
+      color: #fca5a5;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
     /* Helper utility classes */
     .hidden {
       display: none !important;
@@ -352,11 +530,48 @@
       <div class="mode-tabs">
         <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
         <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
+        <button type="button" class="tab-btn" id="tab-balance" onclick="switchMode('balance')">餘額查詢</button>
       </div>
 
+      <!-- ================= 餘額查詢 模式畫面 ================= -->
+      <div id="balance-mode-fields" class="hidden">
+        <!-- 總資產淨值卡片 -->
+        <div class="total-worth-card">
+          <div class="total-worth-header">
+            <span class="total-worth-title">💎 總資產淨值</span>
+            <button type="button" class="refresh-btn" onclick="refreshBalances()" title="重新整理餘額">
+              <span id="refresh-icon">🔄</span>
+            </button>
+          </div>
+          <div class="total-worth-amount" id="total-net-worth">$0</div>
+        </div>
+
+        <!-- 三階連動篩選器 -->
+        <div class="filter-section">
+          <div class="filter-title">🔍 篩選帳戶 (銀行 / 戶頭 / 名目)</div>
+          <div class="select-grid">
+            <select id="filter-bank" class="select-field" onchange="onFilterBankChange()">
+              <option value="">全部銀行</option>
+            </select>
+            <select id="filter-account" class="select-field" onchange="onFilterAccountChange()">
+              <option value="">全部戶頭</option>
+            </select>
+          </div>
+          <select id="filter-purpose" class="select-field" style="margin-top: 8px;" onchange="renderBalanceList()">
+            <option value="">全部名目用途</option>
+          </select>
+        </div>
+
+        <!-- 帳戶餘額卡片清單 -->
+        <div id="balance-list-container" class="balance-list-container">
+          <!-- 由 JS 動態生成 -->
+        </div>
+      </div>
+
+      <!-- ================= 交易記帳 表單 ================= -->
       <form id="tx-form" onsubmit="handleFormSubmit(event)">
         <!-- 交易日期 -->
-        <div class="form-group">
+        <div class="form-group" id="tx-date-group">
           <label class="form-label" for="tx-date">交易日期</label>
           <input type="date" id="tx-date" class="input-field" required>
         </div>
@@ -381,9 +596,13 @@
                 <option value="">選擇戶頭</option>
               </select>
             </div>
-            <select id="single-purpose" class="select-field" style="margin-top: 8px;" required disabled>
+            <select id="single-purpose" class="select-field" style="margin-top: 8px;" onchange="onSinglePurposeChange()" required disabled>
               <option value="">選擇名目用途</option>
             </select>
+            <div id="single-balance-badge" class="balance-badge hidden">
+              <span>當前餘額</span>
+              <span id="single-balance-val" class="balance-badge-val">$0</span>
+            </div>
           </div>
         </div>
 
@@ -402,9 +621,13 @@
                 <option value="">選擇戶頭</option>
               </select>
             </div>
-            <select id="from-purpose" class="select-field" style="margin-top: 8px;" disabled>
+            <select id="from-purpose" class="select-field" style="margin-top: 8px;" onchange="onFromPurposeChange()" disabled>
               <option value="">選擇名目用途</option>
             </select>
+            <div id="from-balance-badge" class="balance-badge hidden">
+              <span>當前餘額</span>
+              <span id="from-balance-val" class="balance-badge-val">$0</span>
+            </div>
           </div>
 
           <!-- 轉入帳戶 -->
@@ -420,14 +643,18 @@
                 <option value="">選擇戶頭</option>
               </select>
             </div>
-            <select id="to-purpose" class="select-field" style="margin-top: 8px;" disabled>
+            <select id="to-purpose" class="select-field" style="margin-top: 8px;" onchange="onToPurposeChange()" disabled>
               <option value="">選擇名目用途</option>
             </select>
+            <div id="to-balance-badge" class="balance-badge hidden">
+              <span>當前餘額</span>
+              <span id="to-balance-val" class="balance-badge-val">$0</span>
+            </div>
           </div>
         </div>
 
         <!-- 金額 -->
-        <div class="form-group">
+        <div class="form-group" id="tx-amount-group">
           <label class="form-label" for="tx-amount">交易金額</label>
           <div class="amount-input-wrapper">
             <span class="amount-prefix">$</span>
@@ -436,7 +663,7 @@
         </div>
 
         <!-- 項目說明 -->
-        <div class="form-group">
+        <div class="form-group" id="tx-desc-group">
           <label class="form-label" for="tx-desc">交易項目說明 (選填)</label>
           <input type="text" id="tx-desc" class="input-field" placeholder="例如：7月利息 / 儲蓄提撥">
         </div>
@@ -457,9 +684,10 @@
 
   <script>
     // 全域狀態
-    let currentMode = 'single'; // 'single' | 'transfer'
+    let currentMode = 'single'; // 'single' | 'transfer' | 'balance'
     let currentType = 'expense'; // 'expense' | 'income'
     let accountRawData = [];
+    let totalNetWorth = 0;
 
     // 初始化頁面
     window.addEventListener('DOMContentLoaded', () => {
@@ -467,45 +695,65 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('tx-date').value = today;
 
-      // 載入帳戶選單
+      // 載入帳戶選單與餘額
       loadAccountOptions();
     });
 
-    // 切換模式 (單筆 / 資金平移)
+    // 格式化金錢顯示
+    function formatCurrency(val) {
+      const num = Number(val) || 0;
+      const isNeg = num < 0;
+      const absFormatted = Math.abs(num).toLocaleString('zh-TW');
+      return isNeg ? `-$ ${absFormatted}` : `$ ${absFormatted}`;
+    }
+
+    // 切換模式 (單筆 / 資金平移 / 餘額查詢)
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById('tab-single').classList.toggle('active', mode === 'single');
       document.getElementById('tab-transfer').classList.toggle('active', mode === 'transfer');
+      document.getElementById('tab-balance').classList.toggle('active', mode === 'balance');
 
       const singleFields = document.getElementById('single-mode-fields');
       const transferFields = document.getElementById('transfer-mode-fields');
+      const balanceFields = document.getElementById('balance-mode-fields');
+      const txForm = document.getElementById('tx-form');
 
-      if (mode === 'single') {
-        singleFields.classList.remove('hidden');
-        transferFields.classList.add('hidden');
-        document.getElementById('single-bank').required = true;
-        document.getElementById('single-account').required = true;
-        document.getElementById('single-purpose').required = true;
-
-        document.getElementById('from-bank').required = false;
-        document.getElementById('from-account').required = false;
-        document.getElementById('from-purpose').required = false;
-        document.getElementById('to-bank').required = false;
-        document.getElementById('to-account').required = false;
-        document.getElementById('to-purpose').required = false;
+      if (mode === 'balance') {
+        txForm.classList.add('hidden');
+        balanceFields.classList.remove('hidden');
+        renderBalanceList();
       } else {
-        singleFields.classList.add('hidden');
-        transferFields.classList.remove('hidden');
-        document.getElementById('single-bank').required = false;
-        document.getElementById('single-account').required = false;
-        document.getElementById('single-purpose').required = false;
+        txForm.classList.remove('hidden');
+        balanceFields.classList.add('hidden');
 
-        document.getElementById('from-bank').required = true;
-        document.getElementById('from-account').required = true;
-        document.getElementById('from-purpose').required = true;
-        document.getElementById('to-bank').required = true;
-        document.getElementById('to-account').required = true;
-        document.getElementById('to-purpose').required = true;
+        if (mode === 'single') {
+          singleFields.classList.remove('hidden');
+          transferFields.classList.add('hidden');
+          document.getElementById('single-bank').required = true;
+          document.getElementById('single-account').required = true;
+          document.getElementById('single-purpose').required = true;
+
+          document.getElementById('from-bank').required = false;
+          document.getElementById('from-account').required = false;
+          document.getElementById('from-purpose').required = false;
+          document.getElementById('to-bank').required = false;
+          document.getElementById('to-account').required = false;
+          document.getElementById('to-purpose').required = false;
+        } else {
+          singleFields.classList.add('hidden');
+          transferFields.classList.remove('hidden');
+          document.getElementById('single-bank').required = false;
+          document.getElementById('single-account').required = false;
+          document.getElementById('single-purpose').required = false;
+
+          document.getElementById('from-bank').required = true;
+          document.getElementById('from-account').required = true;
+          document.getElementById('from-purpose').required = true;
+          document.getElementById('to-bank').required = true;
+          document.getElementById('to-account').required = true;
+          document.getElementById('to-purpose').required = true;
+        }
       }
     }
 
@@ -517,11 +765,11 @@
       });
     }
 
-    // 呼叫 GAS 後端取得帳戶選單
-    function loadAccountOptions() {
+    // 呼叫 GAS 後端取得帳戶選單與餘額
+    function loadAccountOptions(isRefresh = false) {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
-          .withSuccessHandler(onAccountOptionsLoaded)
+          .withSuccessHandler((res) => onAccountOptionsLoaded(res, isRefresh))
           .withFailureHandler(onAccountOptionsFailed)
           .getAccountOptions();
       } else {
@@ -529,24 +777,52 @@
       }
     }
 
-    function onAccountOptionsLoaded(response) {
+    function onAccountOptionsLoaded(response, isRefresh = false) {
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (refreshIcon) refreshIcon.style.animation = 'none';
+
       if (!response || !response.success) {
         showToast(response ? response.error : '載入帳戶選單失敗', 'error');
         return;
       }
 
       accountRawData = response.data || [];
+      totalNetWorth = response.totalNetWorth || 0;
+
+      const totalElem = document.getElementById('total-net-worth');
+      if (totalElem) {
+        totalElem.textContent = formatCurrency(totalNetWorth);
+      }
+
       populateBankSelects();
+      populateFilterSelects();
+      renderBalanceList();
+
+      // 更新現有選擇的 Badge 餘額
+      onSinglePurposeChange();
+      onFromPurposeChange();
+      onToPurposeChange();
+
+      if (isRefresh) {
+        showToast('餘額資料已同步最新計算！', 'success');
+      }
     }
 
     function onAccountOptionsFailed(error) {
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (refreshIcon) refreshIcon.style.animation = 'none';
       showToast('後端連線失敗: ' + (error.message || error), 'error');
     }
 
-    // 填充所有銀行選單
+    function refreshBalances() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      if (refreshIcon) refreshIcon.style.animation = 'spin 0.8s linear infinite';
+      loadAccountOptions(true);
+    }
+
+    // 填充記帳銀行選單
     function populateBankSelects() {
       const banks = [...new Set(accountRawData.map(item => item.bank))];
-
       const bankOptionsHTML = '<option value="">請選擇銀行</option>' +
         banks.map(b => `<option value="${b}">${b}</option>`).join('');
 
@@ -554,6 +830,107 @@
         const elem = document.getElementById(id);
         if (elem) elem.innerHTML = bankOptionsHTML;
       });
+    }
+
+    // 填充餘額查詢頁面之篩選選單
+    function populateFilterSelects() {
+      const filterBankElem = document.getElementById('filter-bank');
+      if (!filterBankElem) return;
+
+      const banks = [...new Set(accountRawData.map(item => item.bank))];
+      filterBankElem.innerHTML = '<option value="">全部銀行</option>' +
+        banks.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      onFilterBankChange();
+    }
+
+    function onFilterBankChange() {
+      const selectedBank = document.getElementById('filter-bank').value;
+      const accountElem = document.getElementById('filter-account');
+      const purposeElem = document.getElementById('filter-purpose');
+      if (!accountElem || !purposeElem) return;
+
+      purposeElem.innerHTML = '<option value="">全部名目用途</option>';
+
+      if (!selectedBank) {
+        accountElem.innerHTML = '<option value="">全部戶頭</option>';
+      } else {
+        const filteredAccounts = [...new Set(
+          accountRawData
+            .filter(item => item.bank === selectedBank)
+            .map(item => item.account)
+        )];
+        accountElem.innerHTML = '<option value="">全部戶頭</option>' +
+          filteredAccounts.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
+
+      onFilterAccountChange();
+    }
+
+    function onFilterAccountChange() {
+      const selectedBank = document.getElementById('filter-bank').value;
+      const selectedAccount = document.getElementById('filter-account').value;
+      const purposeElem = document.getElementById('filter-purpose');
+      if (!purposeElem) return;
+
+      let filteredItems = accountRawData;
+      if (selectedBank) {
+        filteredItems = filteredItems.filter(item => item.bank === selectedBank);
+      }
+      if (selectedAccount) {
+        filteredItems = filteredItems.filter(item => item.account === selectedAccount);
+      }
+
+      const filteredPurposes = [...new Set(filteredItems.map(item => item.purpose))];
+      purposeElem.innerHTML = '<option value="">全部名目用途</option>' +
+        filteredPurposes.map(p => `<option value="${p}">${p}</option>`).join('');
+
+      renderBalanceList();
+    }
+
+    // 渲染餘額卡片清單
+    function renderBalanceList() {
+      const container = document.getElementById('balance-list-container');
+      if (!container) return;
+
+      const bankFilter = document.getElementById('filter-bank') ? document.getElementById('filter-bank').value : '';
+      const accountFilter = document.getElementById('filter-account') ? document.getElementById('filter-account').value : '';
+      const purposeFilter = document.getElementById('filter-purpose') ? document.getElementById('filter-purpose').value : '';
+
+      let list = accountRawData;
+
+      if (bankFilter) {
+        list = list.filter(item => item.bank === bankFilter);
+      }
+      if (accountFilter) {
+        list = list.filter(item => item.account === accountFilter);
+      }
+      if (purposeFilter) {
+        list = list.filter(item => item.purpose === purposeFilter);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">尚無符合條件的帳戶餘額資料</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const isNeg = Number(item.balance) < 0;
+        return `
+          <div class="balance-item-card">
+            <div class="balance-item-left">
+              <div class="balance-item-bank">🏦 ${item.bank}</div>
+              <div class="balance-item-meta">
+                <span class="tag-account">${item.account}</span>
+                <span class="tag-purpose">${item.purpose}</span>
+              </div>
+            </div>
+            <div class="balance-item-right">
+              <div class="balance-item-val ${isNeg ? 'negative' : ''}">${formatCurrency(item.balance)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     // ================= 動態連動觸發邏輯 =================
@@ -597,6 +974,10 @@
       purposeElem.innerHTML = '<option value="">選擇名目用途</option>';
       purposeElem.disabled = true;
 
+      if (purposeElemId === 'single-purpose') onSinglePurposeChange();
+      if (purposeElemId === 'from-purpose') onFromPurposeChange();
+      if (purposeElemId === 'to-purpose') onToPurposeChange();
+
       if (!selectedBank) {
         accountElem.innerHTML = '<option value="">選擇戶頭</option>';
         accountElem.disabled = true;
@@ -620,18 +1001,63 @@
       if (!selectedBank || !selectedAccount) {
         purposeElem.innerHTML = '<option value="">選擇名目用途</option>';
         purposeElem.disabled = true;
+      } else {
+        const filteredPurposes = [...new Set(
+          accountRawData
+            .filter(item => item.bank === selectedBank && item.account === selectedAccount)
+            .map(item => item.purpose)
+        )];
+
+        purposeElem.innerHTML = '<option value="">選擇名目用途</option>' +
+          filteredPurposes.map(p => `<option value="${p}">${p}</option>`).join('');
+        purposeElem.disabled = false;
+      }
+
+      if (purposeElemId === 'single-purpose') onSinglePurposeChange();
+      if (purposeElemId === 'from-purpose') onFromPurposeChange();
+      if (purposeElemId === 'to-purpose') onToPurposeChange();
+    }
+
+    // 即時動態餘額 Badge 觸發邏輯
+    function onSinglePurposeChange() {
+      const bank = document.getElementById('single-bank').value;
+      const account = document.getElementById('single-account').value;
+      const purpose = document.getElementById('single-purpose').value;
+      updateBalanceBadge(bank, account, purpose, 'single-balance-badge', 'single-balance-val');
+    }
+
+    function onFromPurposeChange() {
+      const bank = document.getElementById('from-bank').value;
+      const account = document.getElementById('from-account').value;
+      const purpose = document.getElementById('from-purpose').value;
+      updateBalanceBadge(bank, account, purpose, 'from-balance-badge', 'from-balance-val');
+    }
+
+    function onToPurposeChange() {
+      const bank = document.getElementById('to-bank').value;
+      const account = document.getElementById('to-account').value;
+      const purpose = document.getElementById('to-purpose').value;
+      updateBalanceBadge(bank, account, purpose, 'to-balance-badge', 'to-balance-val');
+    }
+
+    function updateBalanceBadge(bank, account, purpose, badgeId, valId) {
+      const badgeElem = document.getElementById(badgeId);
+      const valElem = document.getElementById(valId);
+      if (!badgeElem || !valElem) return;
+
+      if (!bank || !account || !purpose) {
+        badgeElem.classList.add('hidden');
         return;
       }
 
-      const filteredPurposes = [...new Set(
-        accountRawData
-          .filter(item => item.bank === selectedBank && item.account === selectedAccount)
-          .map(item => item.purpose)
-      )];
-
-      purposeElem.innerHTML = '<option value="">選擇名目用途</option>' +
-        filteredPurposes.map(p => `<option value="${p}">${p}</option>`).join('');
-      purposeElem.disabled = false;
+      const match = accountRawData.find(item => item.bank === bank && item.account === account && item.purpose === purpose);
+      if (match) {
+        valElem.textContent = formatCurrency(match.balance);
+        valElem.className = `balance-badge-val ${Number(match.balance) < 0 ? 'negative' : ''}`;
+        badgeElem.classList.remove('hidden');
+      } else {
+        badgeElem.classList.add('hidden');
+      }
     }
 
     // 表單送出處理
@@ -691,6 +1117,9 @@
         showToast(response.message || '寫入成功！', 'success');
         document.getElementById('tx-amount').value = '';
         document.getElementById('tx-desc').value = '';
+
+        // 交易成功後自動重新載入最新餘額
+        loadAccountOptions();
       } else {
         showToast(response ? response.error : '寫入失敗', 'error');
       }

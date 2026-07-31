@@ -41,30 +41,39 @@ function getAccountOptions() {
 
     const lastRow = sheet.getLastRow();
     if (lastRow < 5) {
-      return { success: true, data: [] };
+      return { success: true, data: [], totalNetWorth: 0 };
     }
 
-    // A欄:銀行, B欄:帳戶, C欄:身兼名目用途 (從第 5 列開始)
-    const rangeValues = sheet.getRange(5, 1, lastRow - 4, 3).getValues();
+    // A欄:銀行, B欄:帳戶, C欄:身兼名目用途, D欄:基準金額, E欄:當前名目餘額 (從第 5 列開始)
+    const rangeValues = sheet.getRange(5, 1, lastRow - 4, 5).getValues();
 
     const optionsMap = [];
+    let totalNetWorth = 0;
+
     rangeValues.forEach(row => {
       const bank = String(row[0] || '').trim();
       const account = String(row[1] || '').trim();
       const purpose = String(row[2] || '').trim();
+      const rawBalance = row[4];
+      const balance = (typeof rawBalance === 'number' && !isNaN(rawBalance))
+        ? rawBalance
+        : (parseFloat(rawBalance) || 0);
 
       if (bank && account && purpose) {
         optionsMap.push({
           bank: bank,
           account: account,
-          purpose: purpose
+          purpose: purpose,
+          balance: balance
         });
+        totalNetWorth += balance;
       }
     });
 
     return {
       success: true,
-      data: optionsMap
+      data: optionsMap,
+      totalNetWorth: totalNetWorth
     };
   } catch (error) {
     return {
