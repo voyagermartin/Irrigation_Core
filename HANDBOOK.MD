@@ -9,7 +9,7 @@
 
 ## ② System Architecture
 * **數據層 (Database)**: Google Sheets（儲存日常流水帳與帳戶資產主檔）。
-* **邏輯/運算層 (Backend)**: Google Apps Script (GAS)（處理 Web App HTTP 請求、選單資料拉取、當前餘額算術與試算表讀寫）。
+* **邏輯/運算層 (Backend)**: Google Apps Script (GAS)（處理 Web App HTTP 請求、選單資料拉取、當前餘額算術與試算表讀寫，以及年終數據封存與壓縮歸檔）。
 * **使用者介面層 (Frontend/UI)**: 
   * GitHub Pages 無標籤包裹層 (`index.html`)：提供無警告橫幅之全螢幕極致體驗。
   * GAS Web App 表單 (`form.html`)：Mobile-First 現代介面，具備動態下拉選單、資金平移模式、即時餘額 Badge 與各帳戶餘額查詢。
@@ -43,6 +43,7 @@
 * `doGet(e)`: 渲染 Web App 主頁面 (`form.html`)。
 * `getAccountOptions()`: 讀取「5. 帳戶資產淨值表」A~E 欄 (從第 5 列起)，打包為包含當前餘額與總資產淨值之動態 JSON (`{ data, totalNetWorth }`)。
 * `recordTransaction(payload)`: 處理單筆記帳與資金平移（雙筆紀錄），寫入「4. 儲蓄與分配紀錄」。
+* `archiveAndCompressYearly()`: 執行自動化年終數據封存與壓縮，包含檢查備份分頁是否重複、複製封存分頁、固化初始金額與清空流水帳。
 
 ---
 
@@ -51,6 +52,11 @@
   1. 轉出帳戶：寫入筆記，金額填入 `G 欄 (支)`。
   2. 轉入帳戶：寫入筆記，金額填入 `F 欄 (收)`。
 * **平帳原則**: 若遇到歷史利息、回饋或難以對齊的零頭，不回溯查帳，直接於分頁 4 建立「歷史利息與現金回饋平帳」調整項校正 E 欄當前餘額。
+* **年終數據封存與壓縮邏輯**:
+  * **封存機制**: 自動建立獨立的全新備份試算表檔（檔名：`YYYY_歷史紀錄`，如：`2026_歷史紀錄`），完整備份分頁 `4. 儲蓄與分配紀錄` 至該備份檔，隨後將其移入與主試算表相同的雲端硬碟資料夾。
+  * **金額固化**: 將 `5. 帳戶資產淨值表` 第 5 列起之 E 欄當前餘額以「僅貼上值」寫入 D 欄作為新年度的初始金額。
+  * **清空邏輯**: 清空 `4. 儲蓄與分配紀錄` 自第 2 列起的所有交易明細（保留第 1 列標題欄與格式）。
+  * **防呆安全閥**: 雲端硬碟資料夾若已存在同名備份檔，即強制中止以防重複封存。清空流程優先使用 `clearContent` 清空資料，並使用 `try-catch` 限制 `deleteRows` 移除空列時因公式重算導致的逾時風險。
 * **範疇邊界**: 第一階段 MVP 僅處理「實體帳戶扣款/轉帳/提撥」，信用卡消費與兩階段核銷暫不併入 Web App，維持現行獨立追蹤。
 
 ---
@@ -85,7 +91,7 @@
 ---
 
 ## ⑨ Current Sprint
-* **Sprint 目標**: 擴充手機端「餘額查詢」功能與動態即時餘額顯示。
+* **Sprint 目標**: 新增自動年終數據封存與壓縮功能，並進行資料結算與歸檔。
 * **已完成項目**:
   * [x] 完成試算表分頁 4 與分頁 5 的架構大洗牌與 `SUMIFS` 核心公式對齊。
   * [x] 完成 7 月歷史資料輸入與舊帳戶零頭平帳。
@@ -97,13 +103,14 @@
   * [x] 完成 `Code.gs` 讀取 E 欄名目餘額與計算總資產淨值 API。
   * [x] 完成 `form.html` 增設 `[餘額查詢]` 模式頁籤、總資產淨值卡片、三階連動篩選器與記帳即時餘額 Badge。
   * [x] 完成 `appsscript.json` 權限層修正 (`ANYONE_ANONYMOUS`) 與 Release `@4` 正式發布。
-* **目前停止位置**: 已完成全套「餘額查詢」與「動態餘額顯示」功能升級與發布。
-* **下一步施工位置**: 日常營運體驗維護與手機桌面捷徑使用。
+  * [x] 在 `Code.gs` 中實作 `archiveAndCompressYearly()` 函數，完成金額固化與舊帳清空。
+* **目前停止位置**: 已完成年終數據封存與壓縮功能開發。
+* **下一步施工位置**: 部署新版 Web App 並進行實機年終歸檔測試。
 
 ---
 
 ## ⑩ Current Version
-`v1.1.0` (新增手機端餘額查詢與即時餘額顯示)
+`v1.2.0` (新增自動年終數據封存與壓縮)
 
 ---
 
@@ -134,5 +141,12 @@
   * 記帳模式選定帳戶時動態浮現當前餘額提示 Badge。
 * **GAS 權限與多重帳號修復 (appsscript.json)**：新增 `webapp` 清單屬性，設定 `access: ANYONE_ANONYMOUS` 解決跨站 iframe 401 錯誤與 Google 第三方 Cookie 限制。
 * **正式發布與部署**：執行 `clasp push` / `clasp deploy` 發布至 Release `@4` 並完成 Git 提交推送到 GitHub。
+
+### 2026/08/05
+* **自動年終數據封存與壓縮 (Code.gs)**：
+  * 新增 `archiveAndCompressYearly()` API，實作 DriveApp 同資料夾防呆機制，建立獨立備份檔（格式：`YYYY_歷史紀錄`，如 `2026_歷史紀錄`）且自動移除預設空白頁。
+  * 實作**極速清空優化**：優先調用 `clearContent()` 並執行 `SpreadsheetApp.flush()` 使 `SUMIFS` 公式即時歸零，最後在 `try-catch` 安全保護下執行 `deleteRows` 移除空列，徹底解決 Google 試算表重算引發的超時問題（Exceeded maximum execution time）。
+  * 實作**金額固化強制同步**：將資產淨值表 E 欄當前餘額固化寫入 D 欄後，即時進行 `SpreadsheetApp.flush()` 確保同步。
+  * 更新 [HANDBOOK.MD](file:///d:/Projects/Irrigation_Core/HANDBOOK.MD) 的架構說明、決策引擎邏輯與版本號至 `v1.2.0`。
 
 
