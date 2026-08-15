@@ -158,7 +158,7 @@ function recordTransaction(payload) {
         fromBank,
         fromAccount,
         fromPurpose,
-        `資金平移(轉出) -> ${toBank}-${toAccount}(${toPurpose})${baseDesc}`,
+        `資金平移 ➔ 轉出至 ${toBank}-${toAccount}(${toPurpose})${baseDesc}`,
         '',
         numAmount
       ]);
@@ -169,7 +169,7 @@ function recordTransaction(payload) {
         toBank,
         toAccount,
         toPurpose,
-        `資金平移(轉入) <- ${fromBank}-${fromAccount}(${fromPurpose})${baseDesc}`,
+        `資金平移 ⬅ 來自 ${fromBank}-${fromAccount}(${fromPurpose})${baseDesc}`,
         numAmount,
         ''
       ]);
