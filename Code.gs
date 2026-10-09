@@ -6,7 +6,8 @@
 // 試算表分頁名稱定義
 const SHEET_NAMES = {
   RECORD: '4. 儲蓄與分配紀錄',
-  ASSET: '5. 帳戶資產淨值表'
+  ASSET: '5. 帳戶資產淨值表',
+  SUMMARY: '6. 銀行活儲水位與條件'
 };
 
 /**
@@ -339,3 +340,5 @@ function archiveAndCompressYearly() {
     }
   }
 }
+
+
