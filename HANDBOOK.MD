@@ -121,7 +121,7 @@
 ---
 
 ## ⑩ Current Version
-`v1.3.0` (資料庫解耦重構：獨立「6. 銀行活儲水位與條件」分頁)
+`v1.3.2` (獨立分頁 6 新增滿額狀態 > 100% 自動紅字粗體條件式格式設定)
 
 ---
 
@@ -130,7 +130,7 @@
 * **Milestone 2**: HTML/JS 前端 UI 開發（`form.html`，支援單筆與資金平移切換）。
 * **Milestone 3**: 部署 Web App 與 GitHub Pages 無標籤包裹層，進行 E2E 驗收。
 * **Milestone 4**: 手機端隨時查詢各銀行/戶頭/名目用途餘額與動態即時餘額顯示 (`v1.1.0`)。
-* **Milestone 5**: 資料庫解耦重構（獨立「6. 銀行活儲水位與條件」分頁與跨表動態加總，`v1.3.1`）。
+* **Milestone 5**: 資料庫解耦重構（獨立「6. 銀行活儲水位與條件」分頁與滿額警示，`v1.3.2`）。
 
 ---
 
@@ -173,7 +173,9 @@
   * 實作一次性遷移函數 `migrateBankSummaryToNewSheet()`，建立獨立分頁 `6. 銀行活儲水位與條件`。
   * 實作對應修復函數 `fixBankSummarySheet()`，精準修正 A 欄【銀行】與 B 欄【帳戶】拆分清單（如：永豐/大戶、台企/Hokii、臺銀/數位...共 13 筆實體與數位帳戶條件）。
   * 重新注入 C 欄 `=SUMIFS('5. 帳戶資產淨值表'!$E:$E, '5. 帳戶資產淨值表'!$A:$A, A2, '5. 帳戶資產淨值表'!$B:$B, B2)` 與 E 欄 `=IF(D2>0, C2/D2, "---")` 動態百分比公式，順利解決跨表加總為 0 之問題。
-  * 更新 [HANDBOOK.MD](file:///f:/Projects/Irrigation_Core/HANDBOOK.MD) 並升級版本號至 `v1.3.1`。
+  * **滿額狀態條件式格式**：針對分頁 6 的 E 欄（滿額狀態）新增條件式格式設定規則（Conditional Format Rules），當滿額比例 > 100%（> 1）時，自動呈現鮮紅文字與粗體（`#dc2626` + `bold`）。
+  * 更新 [HANDBOOK.MD](file:///f:/Projects/Irrigation_Core/HANDBOOK.MD) 並升級版本號至 `v1.3.2`。
+
 
 
 
