@@ -179,9 +179,10 @@
 
   <script>
     const STORAGE_KEY = 'IRRIGATION_CORE_GAS_URL';
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxkcowM95QzDgHJqxb9ju-D6UF-BSrdtSYZXFooMaCvA5S-J8j9nrF6YcBQ5PdIZIYS/exec';
 
     window.addEventListener('DOMContentLoaded', () => {
-      const savedUrl = localStorage.getItem(STORAGE_KEY);
+      const savedUrl = localStorage.getItem(STORAGE_KEY) || DEFAULT_GAS_URL;
       if (savedUrl) {
         launchIframe(savedUrl);
       }
