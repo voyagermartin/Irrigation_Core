@@ -678,6 +678,269 @@ function initCreditCardSheetsWithAutoBanks() {
   }
 }
 
+/**
+ * 設定並升級分頁「7. 信用卡消費明細」之逐筆對帳 Check 與批次撥款機制：
+ * 1. 調整標題列欄位結構（A: 帳單核對 ~ L: 備註）
+ * 2. 注入 Google Sheets 原生 Checkbox 核取方塊
+ * 3. 設定下拉選單與欄位格式（銀行/卡片/名目跨表連動）
+ * 4. 頂部凍結區注入「已核對待撥款總額」看板公式
+ * 5. 配置條件式格式：
+ *    - A 欄為 TRUE 時，B~G 欄自動變為深灰色文字並加上刪除線
+ *    - H 欄為「已撥款」時，A~L 欄自動變為淡灰底色
+ */
+function upgradeCreditCardCheckMechanism() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+
+    const recordSheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!recordSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+
+    const cardSheet = ss.getSheetByName(SHEET_NAMES.CC_CARDS);
+    const assetSheet = ss.getSheetByName(SHEET_NAMES.ASSET);
+
+    recordSheet.setFrozenRows(1);
+
+    // 1. 標題列結構定義 (A~L 欄)
+    const headers = [
+      '帳單核對',      // A
+      '消費日期',      // B
+      '發卡銀行',      // C
+      '卡片',          // D
+      '消費項目',      // E
+      '支付通道',      // F
+      '消費金額',      // G
+      '撥款狀態',      // H
+      '撥款調度日期',  // I
+      '帳單週期',      // J
+      '對應扣款名目',  // K
+      '備註'           // L
+    ];
+
+    const headerBgColor = '#1e3a8a';
+    const headerFontColor = '#ffffff';
+
+    // 寫入 A1:L1 標題
+    recordSheet.getRange(1, 1, 1, headers.length)
+      .setValues([headers])
+      .setBackground(headerBgColor)
+      .setFontColor(headerFontColor)
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center');
+
+    // 頂部看板摘要（M1: 標籤, N1: 公式）
+    recordSheet.getRange('M1')
+      .setValue('已核對待撥款總額')
+      .setBackground('#065f46')
+      .setFontColor('#a7f3d0')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center');
+
+    recordSheet.getRange('N1')
+      .setFormula('=SUMIFS(G:G, A:A, TRUE, H:H, "待撥款")')
+      .setBackground('#064e3b')
+      .setFontColor('#34d399')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center')
+      .setNumberFormat('$#,##0');
+
+    // 2. A 欄：插入原生 Checkbox 核取方塊 (A2:A500)
+    const checkboxRule = SpreadsheetApp.newDataValidation()
+      .requireCheckbox()
+      .build();
+    recordSheet.getRange('A2:A500')
+      .setDataValidation(checkboxRule)
+      .setHorizontalAlignment('center');
+
+    // 3. 欄位格式化與資料驗證
+    // B 欄 (消費日期): 日期格式
+    recordSheet.getRange('B2:B500')
+      .setNumberFormat('yyyy/mm/dd')
+      .setHorizontalAlignment('center');
+
+    // C 欄 (發卡銀行): 下拉選單連動分頁 8 A 欄 (A2:A100)
+    if (cardSheet) {
+      const bankRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(cardSheet.getRange('A2:A100'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('C2:C500').setDataValidation(bankRule);
+    }
+
+    // D 欄 (卡片): 下拉選單連動分頁 8 D 欄 (D2:D100, 卡片辨識全名)
+    if (cardSheet) {
+      const cardRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(cardSheet.getRange('D2:D100'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('D2:D500').setDataValidation(cardRule);
+    }
+
+    // F 欄 (支付通道): 下拉選單
+    const channels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
+    const channelRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(channels, true)
+      .setAllowInvalid(true)
+      .build();
+    recordSheet.getRange('F2:F500').setDataValidation(channelRule);
+
+    // G 欄 (消費金額): 數字千分位格式
+    recordSheet.getRange('G2:G500').setNumberFormat('#,##0');
+
+    // H 欄 (撥款狀態): 下拉選單 (待撥款 / 已撥款)
+    const dispatchRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['待撥款', '已撥款'], true)
+      .setAllowInvalid(false)
+      .build();
+    recordSheet.getRange('H2:H500')
+      .setDataValidation(dispatchRule)
+      .setHorizontalAlignment('center');
+
+    // I 欄 (撥款調度日期): 日期格式
+    recordSheet.getRange('I2:I500')
+      .setNumberFormat('yyyy/mm/dd')
+      .setHorizontalAlignment('center');
+
+    // J 欄 (帳單週期): 純文字格式
+    recordSheet.getRange('J2:J500')
+      .setNumberFormat('@')
+      .setHorizontalAlignment('center');
+
+    // K 欄 (對應扣款名目): 下拉選單連動分頁 5 C 欄名目用途 (C5:C100)
+    if (assetSheet) {
+      const purposeRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(assetSheet.getRange('C5:C100'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('K2:K500').setDataValidation(purposeRule);
+    }
+
+    // 4. 設定欄寬自訂優化
+    recordSheet.setColumnWidth(1, 80);   // A: 帳單核對
+    recordSheet.setColumnWidth(2, 110);  // B: 消費日期
+    recordSheet.setColumnWidth(3, 110);  // C: 發卡銀行
+    recordSheet.setColumnWidth(4, 160);  // D: 卡片
+    recordSheet.setColumnWidth(5, 160);  // E: 消費項目
+    recordSheet.setColumnWidth(6, 120);  // F: 支付通道
+    recordSheet.setColumnWidth(7, 110);  // G: 消費金額
+    recordSheet.setColumnWidth(8, 100);  // H: 撥款狀態
+    recordSheet.setColumnWidth(9, 120);  // I: 撥款調度日期
+    recordSheet.setColumnWidth(10, 110); // J: 帳單週期
+    recordSheet.setColumnWidth(11, 140); // K: 對應扣款名目
+    recordSheet.setColumnWidth(12, 180); // L: 備註
+    recordSheet.setColumnWidth(13, 140); // M: 看板標籤
+    recordSheet.setColumnWidth(14, 120); // N: 看板金額
+
+    // 5. 配置條件式格式
+    // 規則 1: 當 H 欄為「已撥款」時，A~L 欄套用淡灰底色 (#f1f5f9) 與淡灰文字 (#64748b)
+    const ruleDispatched = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$H2="已撥款"')
+      .setBackground('#f1f5f9')
+      .setFontColor('#64748b')
+      .setRanges([recordSheet.getRange('A2:L500')])
+      .build();
+
+    // 規則 2: 當 A 欄為 TRUE（已勾選核對）時，B~G 欄自動變為深灰色文字 (#9ca3af) 並加上刪除線
+    const ruleChecked = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$A2=TRUE')
+      .setFontColor('#9ca3af')
+      .setStrikethrough(true)
+      .setRanges([recordSheet.getRange('B2:G500')])
+      .build();
+
+    recordSheet.setConditionalFormatRules([ruleDispatched, ruleChecked]);
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: '分頁「7. 信用卡消費明細」對帳與撥款機制升級成功！',
+      sheet: SHEET_NAMES.CC_RECORD,
+      columnsCount: headers.length,
+      headers: headers
+    };
+  } catch (error) {
+    Logger.log('upgradeCreditCardCheckMechanism 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '升級分頁 7 失敗'
+    };
+  }
+}
+
+/**
+ * 輔助函式：批次將指定銀行且已勾選帳單核對 (A 欄為 TRUE) 之待撥款交易更新為已撥款
+ * @param {string} targetBank 目標發卡銀行（如：'永豐'、'富邦'，若傳入 'ALL' 或留空則針對全部已勾選銀行）
+ * @param {string} [transferDate] 撥款調度日期（預設為今天 YYYY/MM/DD）
+ * @returns {Object} 執行結果與更新筆數
+ */
+function batchMarkAsTransferred(targetBank, transferDate) {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!sheet) {
+      throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return { success: true, updatedCount: 0, message: '目前尚無交易明細' };
+    }
+
+    const dateStr = transferDate || formatDate(new Date());
+    // 讀取 A 欄 (核對)、C 欄 (發卡銀行)、H 欄 (撥款狀態)
+    const rangeValues = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+
+    const rowsToUpdate = [];
+    const filterBank = targetBank ? String(targetBank).trim() : '';
+
+    for (let i = 0; i < rangeValues.length; i++) {
+      const row = rangeValues[i];
+      const isChecked = row[0] === true || String(row[0]).toUpperCase() === 'TRUE';
+      const bank = String(row[2] || '').trim();
+      const status = String(row[7] || '').trim();
+
+      const bankMatch = !filterBank || filterBank === 'ALL' || bank === filterBank;
+      const statusMatch = status === '待撥款' || status === '';
+
+      if (isChecked && bankMatch && statusMatch) {
+        rowsToUpdate.push(i + 2); // 實際列號 (1-based, header is row 1)
+      }
+    }
+
+    if (rowsToUpdate.length === 0) {
+      return {
+        success: true,
+        updatedCount: 0,
+        message: `未找到符合條件（${filterBank || '全部銀行'}、已勾選核對且待撥款）的交易`
+      };
+    }
+
+    // 批次寫入 H 欄 (已撥款) 與 I 欄 (撥款調度日期)
+    rowsToUpdate.forEach(rowIdx => {
+      sheet.getRange(rowIdx, 8).setValue('已撥款');
+      sheet.getRange(rowIdx, 9).setValue(dateStr);
+    });
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      updatedCount: rowsToUpdate.length,
+      updatedRows: rowsToUpdate,
+      bank: filterBank || '全部銀行',
+      transferDate: dateStr,
+      message: `已成功批次更新 ${rowsToUpdate.length} 筆交易為「已撥款」，撥款日期：${dateStr}`
+    };
+  } catch (error) {
+    Logger.log('batchMarkAsTransferred 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '批次撥款更新失敗'
+    };
+  }
+}
+
 
 
 
