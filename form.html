@@ -863,11 +863,27 @@
         <div class="history-header">
           <div class="history-title-wrap">
             <span class="history-title">最近交易紀錄</span>
-            <span class="history-subtitle">顯示最新 25 筆交易</span>
+            <span class="history-subtitle">顯示最新 50 筆交易</span>
           </div>
           <button type="button" class="refresh-btn" onclick="loadRecentTransactions(true)" title="重新整理紀錄">
             <span id="history-refresh-icon">🔄</span>
           </button>
+        </div>
+
+        <!-- 三階連動篩選器 -->
+        <div class="filter-section">
+          <div class="filter-title">🔍 篩選紀錄 (銀行 / 戶頭 / 名目)</div>
+          <div class="select-grid">
+            <select id="tx-filter-bank" class="select-field" onchange="onTxFilterBankChange()">
+              <option value="">全部銀行</option>
+            </select>
+            <select id="tx-filter-account" class="select-field" onchange="onTxFilterAccountChange()">
+              <option value="">全部戶頭</option>
+            </select>
+          </div>
+          <select id="tx-filter-purpose" class="select-field" style="margin-top: 8px;" onchange="renderRecentTransactions()">
+            <option value="">全部名目用途</option>
+          </select>
         </div>
 
         <!-- 載入中狀態 -->
@@ -1027,6 +1043,7 @@
 
       populateBankSelects();
       populateFilterSelects();
+      populateTxFilterSelects();
       renderBalanceList();
 
       // 更新現有選擇的 Badge 餘額
@@ -1162,6 +1179,78 @@
           </div>
         `;
       }).join('');
+    }
+
+    // 填充查詢紀錄頁面之篩選選單
+    function populateTxFilterSelects() {
+      const filterBankElem = document.getElementById('tx-filter-bank');
+      if (!filterBankElem) return;
+
+      const currentSelectedBank = filterBankElem.value;
+      const banks = [...new Set(accountRawData.map(item => item.bank))];
+      filterBankElem.innerHTML = '<option value="">全部銀行</option>' +
+        banks.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      if (banks.includes(currentSelectedBank)) {
+        filterBankElem.value = currentSelectedBank;
+      }
+
+      onTxFilterBankChange();
+    }
+
+    function onTxFilterBankChange() {
+      const selectedBank = document.getElementById('tx-filter-bank') ? document.getElementById('tx-filter-bank').value : '';
+      const accountElem = document.getElementById('tx-filter-account');
+      const purposeElem = document.getElementById('tx-filter-purpose');
+      if (!accountElem || !purposeElem) return;
+
+      const currentSelectedAccount = accountElem.value;
+      purposeElem.innerHTML = '<option value="">全部名目用途</option>';
+
+      if (!selectedBank) {
+        accountElem.innerHTML = '<option value="">全部戶頭</option>';
+      } else {
+        const filteredAccounts = [...new Set(
+          accountRawData
+            .filter(item => item.bank === selectedBank)
+            .map(item => item.account)
+        )];
+        accountElem.innerHTML = '<option value="">全部戶頭</option>' +
+          filteredAccounts.map(a => `<option value="${a}">${a}</option>`).join('');
+
+        if (filteredAccounts.includes(currentSelectedAccount)) {
+          accountElem.value = currentSelectedAccount;
+        }
+      }
+
+      onTxFilterAccountChange();
+    }
+
+    function onTxFilterAccountChange() {
+      const selectedBank = document.getElementById('tx-filter-bank') ? document.getElementById('tx-filter-bank').value : '';
+      const selectedAccount = document.getElementById('tx-filter-account') ? document.getElementById('tx-filter-account').value : '';
+      const purposeElem = document.getElementById('tx-filter-purpose');
+      if (!purposeElem) return;
+
+      const currentSelectedPurpose = purposeElem.value;
+
+      let filteredItems = accountRawData;
+      if (selectedBank) {
+        filteredItems = filteredItems.filter(item => item.bank === selectedBank);
+      }
+      if (selectedAccount) {
+        filteredItems = filteredItems.filter(item => item.account === selectedAccount);
+      }
+
+      const filteredPurposes = [...new Set(filteredItems.map(item => item.purpose))];
+      purposeElem.innerHTML = '<option value="">全部名目用途</option>' +
+        filteredPurposes.map(p => `<option value="${p}">${p}</option>`).join('');
+
+      if (filteredPurposes.includes(currentSelectedPurpose)) {
+        purposeElem.value = currentSelectedPurpose;
+      }
+
+      renderRecentTransactions();
     }
 
     // ================= 動態連動觸發邏輯 =================
@@ -1361,7 +1450,7 @@
       }
     }
 
-    // 呼叫 GAS 後端取得最近交易紀錄 (預設 25 筆)
+    // 呼叫 GAS 後端取得最近交易紀錄 (預設 50 筆)
     function loadRecentTransactions(isRefresh = false) {
       const refreshIcon = document.getElementById('history-refresh-icon');
       const loadingElem = document.getElementById('history-loading');
@@ -1375,7 +1464,7 @@
         google.script.run
           .withSuccessHandler((res) => onRecentTransactionsLoaded(res, isRefresh))
           .withFailureHandler(onRecentTransactionsFailed)
-          .getRecentTransactions(25);
+          .getRecentTransactions(50);
       } else {
         // 本地開發測試模擬資料
         setTimeout(() => {
@@ -1406,6 +1495,9 @@
 
       recentTransactions = response.data || [];
       isHistoryLoaded = true;
+      if (accountRawData.length > 0) {
+        populateTxFilterSelects();
+      }
       renderRecentTransactions();
 
       if (isRefresh) {
@@ -1435,7 +1527,28 @@
         return;
       }
 
-      container.innerHTML = recentTransactions.map(tx => {
+      const bankFilter = document.getElementById('tx-filter-bank') ? document.getElementById('tx-filter-bank').value : '';
+      const accountFilter = document.getElementById('tx-filter-account') ? document.getElementById('tx-filter-account').value : '';
+      const purposeFilter = document.getElementById('tx-filter-purpose') ? document.getElementById('tx-filter-purpose').value : '';
+
+      let list = recentTransactions;
+
+      if (bankFilter) {
+        list = list.filter(item => item.bank === bankFilter);
+      }
+      if (accountFilter) {
+        list = list.filter(item => item.account === accountFilter);
+      }
+      if (purposeFilter) {
+        list = list.filter(item => item.purpose === purposeFilter);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">尚無符合條件的交易紀錄</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(tx => {
         const isIncome = tx.type === 'income';
         const typeClass = isIncome ? 'income' : 'expense';
         const typeLabel = isIncome ? '收入 (+)' : '支出 (-)';
