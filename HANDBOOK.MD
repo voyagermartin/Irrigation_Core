@@ -121,8 +121,9 @@
   * [x] 針對分頁 6 的 E 欄（滿額狀態）設定條件式格式，滿額比例 >= 100% 時自動顯示紅字粗體。
   * [x] 在 `Code.gs` 實作 `getRecentTransactions(limit)` 函數，支援讀取分頁 4 最後 25 筆交易並倒序回傳。
   * [x] 在 `form.html` 頂部增設【新增記帳】與【查詢紀錄】大頁籤，打造 Mobile-First 交易紀錄卡片流（含日期、銀行帳戶、名目、備註、收入綠/支出紅金額、手動重新整理與 Loading 狀態）。
-* **目前停止位置**: 已完成 `Code.gs` 與 `form.html` 之查詢交易紀錄功能開發與手冊同步。
-* **下一步施工位置**: 進行 Web App 雲端發布 (`clasp push`) 與端到端 (E2E) 驗收測試。
+  * [x] 正式發布 Release `@9` 部署版本 (`v1.4.0`) 並透過 `git push` 同步至 GitHub 遠端儲存庫。
+* **目前停止位置**: 已完成 Web App 雲端發布 (`Release @9`) 與 GitHub 遠端同步。
+* **下一步施工位置**: 進行實機瀏覽器與 PWA 無標籤包裹層之端到端 (E2E) 體驗測試。
 
 ---
 
@@ -191,6 +192,7 @@
   * 支援手動一鍵「🔄 重新整理」按鈕與優雅的載入中 (Loading Spinner) 狀態。
   * 記帳成功時自動排程連動更新交易紀錄清單。
 * **手冊規格同步 (HANDBOOK.MD)**：更新 Function Library、Sprint 進度、Roadmap 與升級版本至 `v1.4.0`。
+* **正式發布與遠端同步**：執行 `clasp deploy` 發布至 Release `@9`，並執行 `git push` 同步推送最新提交至 GitHub 遠端儲存庫。
 
 
 
