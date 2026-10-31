@@ -193,6 +193,103 @@ function recordTransaction(payload) {
 }
 
 /**
+ * 讀取「4. 儲蓄與分配紀錄」工作表最後 N 筆資料（預設 25 筆），依時間倒序傳回 JSON 陣列
+ * @param {number} [limit=25] 讀取筆數上限
+ * @returns {Object} 包含交易紀錄陣列之 JSON 物件
+ */
+function getRecentTransactions(limit) {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.RECORD);
+    if (!sheet) {
+      throw new Error(`找不到分頁: ${SHEET_NAMES.RECORD}`);
+    }
+
+    const lastRow = sheet.getLastRow();
+    // 分頁第 1 列為標題列，資料從第 2 列開始
+    if (lastRow <= 1) {
+      return { success: true, data: [] };
+    }
+
+    const maxCount = (typeof limit === 'number' && limit > 0) ? Math.floor(limit) : 25;
+    const totalDataRows = lastRow - 1;
+    const fetchCount = Math.min(maxCount, totalDataRows);
+    const startRow = lastRow - fetchCount + 1;
+
+    // A: 交易日期, B: 實體銀行, C: 實體戶頭, D: 名目帳戶, E: 交易項目說明, F: 收 (+), G: 支 (-)
+    const values = sheet.getRange(startRow, 1, fetchCount, 7).getValues();
+
+    const transactions = [];
+
+    // 依時間倒序（最新記錄排在最前）
+    for (let i = values.length - 1; i >= 0; i--) {
+      const row = values[i];
+      const rawDate = row[0];
+      let formattedDate = '';
+      if (rawDate instanceof Date) {
+        formattedDate = formatDate(rawDate);
+      } else if (rawDate) {
+        formattedDate = String(rawDate).trim();
+      }
+
+      const bank = String(row[1] || '').trim();
+      const account = String(row[2] || '').trim();
+      const purpose = String(row[3] || '').trim();
+      const description = String(row[4] || '').trim();
+
+      const rawIncome = row[5];
+      const rawExpense = row[6];
+
+      const hasIncome = rawIncome !== '' && rawIncome !== null && !isNaN(Number(rawIncome)) && Number(rawIncome) > 0;
+      const hasExpense = rawExpense !== '' && rawExpense !== null && !isNaN(Number(rawExpense)) && Number(rawExpense) > 0;
+
+      let type = 'expense';
+      let amount = 0;
+
+      if (hasIncome) {
+        type = 'income';
+        amount = Number(rawIncome);
+      } else if (hasExpense) {
+        type = 'expense';
+        amount = Number(rawExpense);
+      } else {
+        const incVal = Number(rawIncome) || 0;
+        const expVal = Number(rawExpense) || 0;
+        if (incVal > expVal) {
+          type = 'income';
+          amount = incVal;
+        } else {
+          type = 'expense';
+          amount = expVal;
+        }
+      }
+
+      transactions.push({
+        date: formattedDate,
+        bank: bank,
+        account: account,
+        purpose: purpose,
+        description: description,
+        type: type,
+        amount: amount,
+        income: hasIncome ? Number(rawIncome) : null,
+        expense: hasExpense ? Number(rawExpense) : null
+      });
+    }
+
+    return {
+      success: true,
+      data: transactions
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || '讀取交易紀錄失敗'
+    };
+  }
+}
+
+/**
  * 輔助函式：格式化日期為 YYYY/MM/DD
  */
 function formatDate(dateObj) {

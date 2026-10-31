@@ -511,6 +511,176 @@
       font-size: 0.9rem;
     }
 
+    /* Main Top Tabs */
+    .main-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .main-tab-btn {
+      flex: 1;
+      padding: 11px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .main-tab-btn.active {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    /* History View Styles */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .history-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .history-subtitle {
+      font-size: 0.775rem;
+      color: var(--text-secondary);
+    }
+
+    .history-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .history-spinner {
+      width: 28px;
+      height: 28px;
+      border-width: 3px;
+      border-top-color: var(--accent-primary);
+    }
+
+    .history-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tx-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 13px 15px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tx-card:hover {
+      border-color: rgba(129, 140, 248, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    .tx-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tx-date-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tx-type-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .tx-type-tag.income {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .tx-type-tag.expense {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+
+    .tx-amount {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .tx-amount.income {
+      color: #34d399;
+    }
+
+    .tx-amount.expense {
+      color: #f87171;
+    }
+
+    .tx-account-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .tx-desc-row {
+      font-size: 0.825rem;
+      color: #cbd5e1;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent-primary);
+      word-break: break-word;
+    }
+
     /* Helper utility classes */
     .hidden {
       display: none !important;
@@ -526,12 +696,24 @@
     </div>
 
     <div class="card">
-      <!-- 模式切換 -->
-      <div class="mode-tabs">
-        <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
-        <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
-        <button type="button" class="tab-btn" id="tab-balance" onclick="switchMode('balance')">餘額查詢</button>
+      <!-- 頂部頁籤切換：新增記帳 vs 查詢紀錄 -->
+      <div class="main-tabs">
+        <button type="button" class="main-tab-btn active" id="tab-nav-record" onclick="switchNavTab('record')">
+          <span>📝 新增記帳</span>
+        </button>
+        <button type="button" class="main-tab-btn" id="tab-nav-history" onclick="switchNavTab('history')">
+          <span>📜 查詢紀錄</span>
+        </button>
       </div>
+
+      <!-- ================= 區塊一：新增記帳 / 餘額查詢 ================= -->
+      <div id="panel-record">
+        <!-- 模式切換 -->
+        <div class="mode-tabs">
+          <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
+          <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
+          <button type="button" class="tab-btn" id="tab-balance" onclick="switchMode('balance')">餘額查詢</button>
+        </div>
 
       <!-- ================= 餘額查詢 模式畫面 ================= -->
       <div id="balance-mode-fields" class="hidden">
@@ -674,6 +856,31 @@
           <div id="btn-spinner" class="spinner hidden"></div>
         </button>
       </form>
+      </div>
+
+      <!-- ================= 區塊二：查詢交易紀錄 ================= -->
+      <div id="panel-history" class="hidden">
+        <div class="history-header">
+          <div class="history-title-wrap">
+            <span class="history-title">最近交易紀錄</span>
+            <span class="history-subtitle">顯示最新 25 筆交易</span>
+          </div>
+          <button type="button" class="refresh-btn" onclick="loadRecentTransactions(true)" title="重新整理紀錄">
+            <span id="history-refresh-icon">🔄</span>
+          </button>
+        </div>
+
+        <!-- 載入中狀態 -->
+        <div id="history-loading" class="history-loading hidden">
+          <div class="spinner history-spinner"></div>
+          <span>讀取交易紀錄中...</span>
+        </div>
+
+        <!-- 卡片清單容器 -->
+        <div id="history-list-container" class="history-list-container">
+          <!-- 由 JS 動態生成 -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -684,10 +891,34 @@
 
   <script>
     // 全域狀態
+    let currentNavTab = 'record'; // 'record' | 'history'
     let currentMode = 'single'; // 'single' | 'transfer' | 'balance'
     let currentType = 'expense'; // 'expense' | 'income'
     let accountRawData = [];
     let totalNetWorth = 0;
+    let recentTransactions = [];
+    let isHistoryLoaded = false;
+
+    // 切換頂部大頁籤 (新增記帳 / 查詢紀錄)
+    function switchNavTab(tab) {
+      currentNavTab = tab;
+      document.getElementById('tab-nav-record').classList.toggle('active', tab === 'record');
+      document.getElementById('tab-nav-history').classList.toggle('active', tab === 'history');
+
+      const panelRecord = document.getElementById('panel-record');
+      const panelHistory = document.getElementById('panel-history');
+
+      if (tab === 'history') {
+        panelRecord.classList.add('hidden');
+        panelHistory.classList.remove('hidden');
+        if (!isHistoryLoaded) {
+          loadRecentTransactions();
+        }
+      } else {
+        panelRecord.classList.remove('hidden');
+        panelHistory.classList.add('hidden');
+      }
+    }
 
     // 初始化頁面
     window.addEventListener('DOMContentLoaded', () => {
@@ -1120,9 +1351,128 @@
 
         // 交易成功後自動重新載入最新餘額
         loadAccountOptions();
+
+        // 若已載入過交易紀錄，同步更新最新清單
+        if (isHistoryLoaded) {
+          loadRecentTransactions();
+        }
       } else {
         showToast(response ? response.error : '寫入失敗', 'error');
       }
+    }
+
+    // 呼叫 GAS 後端取得最近交易紀錄 (預設 25 筆)
+    function loadRecentTransactions(isRefresh = false) {
+      const refreshIcon = document.getElementById('history-refresh-icon');
+      const loadingElem = document.getElementById('history-loading');
+      const listContainer = document.getElementById('history-list-container');
+
+      if (refreshIcon) refreshIcon.style.animation = 'spin 0.8s linear infinite';
+      if (loadingElem) loadingElem.classList.remove('hidden');
+      if (listContainer) listContainer.classList.add('hidden');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => onRecentTransactionsLoaded(res, isRefresh))
+          .withFailureHandler(onRecentTransactionsFailed)
+          .getRecentTransactions(25);
+      } else {
+        // 本地開發測試模擬資料
+        setTimeout(() => {
+          onRecentTransactionsLoaded({
+            success: true,
+            data: [
+              { date: '2026/10/31', bank: '永豐', account: '大戶', purpose: '生活預備金', description: '利息存入', type: 'income', amount: 350 },
+              { date: '2026/10/30', bank: '臺銀', account: '數位', purpose: '日常花銷', description: '超市採買', type: 'expense', amount: 1280 }
+            ]
+          }, isRefresh);
+        }, 500);
+      }
+    }
+
+    function onRecentTransactionsLoaded(response, isRefresh = false) {
+      const refreshIcon = document.getElementById('history-refresh-icon');
+      const loadingElem = document.getElementById('history-loading');
+      const listContainer = document.getElementById('history-list-container');
+
+      if (refreshIcon) refreshIcon.style.animation = 'none';
+      if (loadingElem) loadingElem.classList.add('hidden');
+      if (listContainer) listContainer.classList.remove('hidden');
+
+      if (!response || !response.success) {
+        showToast(response ? response.error : '載入交易紀錄失敗', 'error');
+        return;
+      }
+
+      recentTransactions = response.data || [];
+      isHistoryLoaded = true;
+      renderRecentTransactions();
+
+      if (isRefresh) {
+        showToast('交易紀錄已更新至最新狀態！', 'success');
+      }
+    }
+
+    function onRecentTransactionsFailed(error) {
+      const refreshIcon = document.getElementById('history-refresh-icon');
+      const loadingElem = document.getElementById('history-loading');
+      const listContainer = document.getElementById('history-list-container');
+
+      if (refreshIcon) refreshIcon.style.animation = 'none';
+      if (loadingElem) loadingElem.classList.add('hidden');
+      if (listContainer) listContainer.classList.remove('hidden');
+
+      showToast('載入紀錄失敗: ' + (error.message || error), 'error');
+    }
+
+    // 渲染最近交易紀錄卡片清單
+    function renderRecentTransactions() {
+      const container = document.getElementById('history-list-container');
+      if (!container) return;
+
+      if (!recentTransactions || recentTransactions.length === 0) {
+        container.innerHTML = '<div class="empty-state">尚無任何交易紀錄</div>';
+        return;
+      }
+
+      container.innerHTML = recentTransactions.map(tx => {
+        const isIncome = tx.type === 'income';
+        const typeClass = isIncome ? 'income' : 'expense';
+        const typeLabel = isIncome ? '收入 (+)' : '支出 (-)';
+        const sign = isIncome ? '+' : '-';
+        const formattedAmount = `${sign}$ ${Number(tx.amount || 0).toLocaleString('zh-TW')}`;
+
+        return `
+          <div class="tx-card">
+            <div class="tx-card-header">
+              <div class="tx-date-badge">
+                <span>📅 ${tx.date || '---'}</span>
+                <span class="tx-type-tag ${typeClass}">${typeLabel}</span>
+              </div>
+              <div class="tx-amount ${typeClass}">${formattedAmount}</div>
+            </div>
+            <div class="tx-card-body">
+              <div class="tx-account-row">
+                <span>🏦 ${tx.bank}</span>
+                <span class="tag-account">${tx.account}</span>
+                <span class="tag-purpose">${tx.purpose}</span>
+              </div>
+              ${tx.description ? `<div class="tx-desc-row">💬 ${escapeHtml(tx.description)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // HTML 跳脫字元防護
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     function onRecordFailed(error) {
