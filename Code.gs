@@ -534,7 +534,7 @@ function initCreditCardSheetsWithAutoBanks() {
       const rowIdx = i + 2;
       const formulaFullName = `=IF(B${rowIdx}<>"", B${rowIdx} & " (" & C${rowIdx} & ")", "")`;
       const deductBank = b;
-      const deductAccount = defaultAccountMap[b] || '';
+      const formulaDeductAccount = `=IF(G${rowIdx}<>"", IFERROR(INDEX(FILTER('5. 帳戶資產淨值表'!$B$5:$B, '5. 帳戶資產淨值表'!$A$5:$A=G${rowIdx}, '5. 帳戶資產淨值表'!$C$5:$C="信用卡扣繳戶"), 1), IFERROR(XLOOKUP(G${rowIdx}, '5. 帳戶資產淨值表'!$A$5:$A, '5. 帳戶資產淨值表'!$B$5:$B), "")), "")`;
       cardDataRows.push([
         b,                    // 發卡銀行
         '',                   // 卡片暱稱
@@ -543,7 +543,7 @@ function initCreditCardSheetsWithAutoBanks() {
         '',                   // 每月結帳日
         '',                   // 每月繳款截止日
         deductBank,           // 扣繳銀行
-        deductAccount,        // 扣繳帳戶
+        formulaDeductAccount, // 扣繳帳戶
         '使用中',              // 狀態
         ''                    // 備註/權益
       ]);
@@ -940,6 +940,45 @@ function batchMarkAsTransferred(targetBank, transferDate) {
     };
   }
 }
+
+/**
+ * 升級分頁「8. 信用卡卡片主檔」H 欄【扣繳帳戶】：
+ * 將 H 欄改為自動化連動公式，依據 G 欄扣繳銀行自動至分頁 5 查找對應帳戶（優先比對「信用卡扣繳戶」名目）。
+ * 支援手動覆蓋或自訂特殊帳戶。
+ */
+function upgradeCardDeductAccountFormula() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+
+    const cardSheet = ss.getSheetByName(SHEET_NAMES.CC_CARDS);
+    if (!cardSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_CARDS}`);
+
+    const lastRow = Math.max(cardSheet.getLastRow(), 25);
+    const formulas = [];
+
+    for (let r = 2; r <= Math.max(lastRow, 100); r++) {
+      const formula = `=IF(G${r}<>"", IFERROR(INDEX(FILTER('5. 帳戶資產淨值表'!$B$5:$B, '5. 帳戶資產淨值表'!$A$5:$A=G${r}, '5. 帳戶資產淨值表'!$C$5:$C="信用卡扣繳戶"), 1), IFERROR(XLOOKUP(G${r}, '5. 帳戶資產淨值表'!$A$5:$A, '5. 帳戶資產淨值表'!$B$5:$B), "")), "")`;
+      formulas.push([formula]);
+    }
+
+    cardSheet.getRange(2, 8, formulas.length, 1).setFormulas(formulas);
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: '分頁「8. 信用卡卡片主檔」H 欄扣繳帳戶連動公式設定成功！',
+      rowsUpdated: formulas.length
+    };
+  } catch (error) {
+    Logger.log('upgradeCardDeductAccountFormula 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '扣繳帳戶公式升級失敗'
+    };
+  }
+}
+
 
 
 
