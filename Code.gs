@@ -979,6 +979,175 @@ function upgradeCardDeductAccountFormula() {
   }
 }
 
+/**
+ * 從「5. 帳戶資產淨值表」讀取各銀行所屬帳戶清單與推薦扣繳帳戶
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss 試算表實例
+ * @returns {Object} { [bankName]: { accounts: string[], preferred: string } }
+ */
+function getBankAccountsMapFromAssetSheet(ss) {
+  const assetSheet = ss.getSheetByName(SHEET_NAMES.ASSET);
+  if (!assetSheet) return {};
+
+  const lastRow = assetSheet.getLastRow();
+  if (lastRow < 5) return {};
+
+  // A 欄: 銀行, B 欄: 帳戶, C 欄: 名目用途
+  const values = assetSheet.getRange(5, 1, lastRow - 4, 3).getValues();
+  const bankMap = {};
+
+  values.forEach(row => {
+    const bank = String(row[0] || '').trim();
+    const account = String(row[1] || '').trim();
+    const purpose = String(row[2] || '').trim();
+
+    if (bank && account &&
+        !bank.includes('合計') &&
+        !bank.includes('總額') &&
+        !bank.includes('淨值') &&
+        !bank.includes('小計') &&
+        !bank.includes('統計') &&
+        !bank.includes('資產')) {
+
+      if (!bankMap[bank]) {
+        bankMap[bank] = { accounts: [], preferred: '' };
+      }
+
+      if (!bankMap[bank].accounts.includes(account)) {
+        bankMap[bank].accounts.push(account);
+      }
+
+      // 若名目包含「信用卡」或「扣繳」，優先設為預設扣繳帳戶
+      if (purpose.includes('信用卡') || purpose.includes('扣繳') || account.includes('扣繳')) {
+        bankMap[bank].preferred = account;
+      }
+    }
+  });
+
+  // 若未標註信用卡扣繳，預設為第一個帳戶
+  Object.keys(bankMap).forEach(bank => {
+    if (!bankMap[bank].preferred && bankMap[bank].accounts.length > 0) {
+      bankMap[bank].preferred = bankMap[bank].accounts[0];
+    }
+  });
+
+  return bankMap;
+}
+
+/**
+ * 更新單列 H 欄（扣繳帳戶）之連動下拉選單與預設值
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} cardSheet 卡片主檔分頁
+ * @param {number} row 列號
+ * @param {string} bank 銀行名稱
+ * @param {Object} [bankMap] 預先提取的銀行帳戶映射表（選填）
+ */
+function updateCardAccountDropdownForRow(cardSheet, row, bank, bankMap) {
+  if (!cardSheet || row < 2) return;
+
+  if (!bankMap) {
+    const ss = cardSheet.getParent();
+    bankMap = getBankAccountsMapFromAssetSheet(ss);
+  }
+
+  const cellH = cardSheet.getRange(row, 8);
+  const cleanBank = String(bank || '').trim();
+
+  if (!cleanBank || !bankMap[cleanBank] || bankMap[cleanBank].accounts.length === 0) {
+    cellH.clearDataValidations();
+    return;
+  }
+
+  const info = bankMap[cleanBank];
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(info.accounts, true)
+    .setAllowInvalid(true)
+    .build();
+
+  cellH.setDataValidation(rule);
+
+  const curVal = String(cellH.getValue() || '').trim();
+  const curFormula = cellH.getFormula();
+
+  // 若原先為公式、為空、或當前值不屬於該銀行的帳戶清單，則自動帶入推薦帳戶
+  if (curFormula || !curVal || !info.accounts.includes(curVal)) {
+    cellH.setValue(info.preferred || info.accounts[0]);
+  }
+}
+
+/**
+ * 試算表編輯事件觸發器 (Simple Trigger)
+ * 當使用者在「8. 信用卡卡片主檔」修改 G 欄（扣繳銀行）時，
+ * 動態更新該列 H 欄（扣繳帳戶）之連動下拉選單並預設選取。
+ */
+function onEdit(e) {
+  try {
+    if (!e || !e.range) return;
+
+    const sheet = e.range.getSheet();
+    const sheetName = sheet.getName();
+
+    // 僅監聽「8. 信用卡卡片主檔」
+    if (sheetName !== SHEET_NAMES.CC_CARDS) return;
+
+    const row = e.range.getRow();
+    const col = e.range.getColumn();
+
+    // 僅監聽 G 欄（第 7 欄：扣繳銀行）且列數 >= 2
+    if (col === 7 && row >= 2) {
+      const bank = e.range.getValue();
+      updateCardAccountDropdownForRow(sheet, row, bank);
+    }
+  } catch (err) {
+    Logger.log('onEdit 執行失敗: ' + err.message);
+  }
+}
+
+/**
+ * 一次性修復與批次刷新分頁「8. 信用卡卡片主檔」H 欄【扣繳帳戶】下拉選單：
+ * 遍歷所有已填寫列，依據 G 欄扣繳銀行動態配置 H 欄下拉清單，並保留使用者已選或自動推薦扣繳帳戶。
+ */
+function refreshCardAccountDropdowns() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+
+    const cardSheet = ss.getSheetByName(SHEET_NAMES.CC_CARDS);
+    if (!cardSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_CARDS}`);
+
+    const bankMap = getBankAccountsMapFromAssetSheet(ss);
+    const lastRow = cardSheet.getLastRow();
+    if (lastRow < 2) {
+      return { success: true, message: '分頁 8 目前無資料', updatedCount: 0 };
+    }
+
+    const updatedRows = [];
+    for (let r = 2; r <= lastRow; r++) {
+      const bank = String(cardSheet.getRange(r, 7).getValue() || '').trim();
+      if (bank) {
+        updateCardAccountDropdownForRow(cardSheet, r, bank, bankMap);
+        const acc = cardSheet.getRange(r, 8).getValue();
+        const choices = bankMap[bank] ? bankMap[bank].accounts : [];
+        updatedRows.push({ row: r, bank, account: acc, availableChoices: choices });
+      }
+    }
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: `分頁 8 H 欄扣繳帳戶動態下拉選單刷新成功！共處理 ${updatedRows.length} 列。`,
+      updatedCount: updatedRows.length,
+      details: updatedRows
+    };
+  } catch (error) {
+    Logger.log('refreshCardAccountDropdowns 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '刷新卡片扣繳帳戶下拉選單失敗'
+    };
+  }
+}
+
+
 
 
 
