@@ -110,11 +110,11 @@
 
     .tab-btn {
       flex: 1;
-      padding: 9px 3px;
+      padding: 9px 4px;
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 600;
       border-radius: var(--radius-sm);
       cursor: pointer;
@@ -550,15 +550,16 @@
       margin-bottom: 20px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+      gap: 4px;
     }
 
     .main-tab-btn {
       flex: 1;
-      padding: 11px 12px;
+      padding: 10px 4px;
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      font-size: 0.95rem;
+      font-size: 0.875rem;
       font-weight: 700;
       border-radius: var(--radius-sm);
       cursor: pointer;
@@ -566,7 +567,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
+      white-space: nowrap;
     }
 
     .main-tab-btn.active {
@@ -726,63 +728,30 @@
     </div>
 
     <div class="card">
-      <!-- 頂部頁籤切換：新增記帳 vs 查詢紀錄 -->
+      <!-- 頂部頁籤切換：新增記帳 vs 餘額查詢 vs 查詢紀錄 -->
       <div class="main-tabs">
         <button type="button" class="main-tab-btn active" id="tab-nav-record" onclick="switchNavTab('record')">
           <span>📝 新增記帳</span>
+        </button>
+        <button type="button" class="main-tab-btn" id="tab-nav-balance" onclick="switchNavTab('balance')">
+          <span>💎 餘額查詢</span>
         </button>
         <button type="button" class="main-tab-btn" id="tab-nav-history" onclick="switchNavTab('history')">
           <span>📜 查詢紀錄</span>
         </button>
       </div>
 
-      <!-- ================= 區塊一：新增記帳 / 餘額查詢 ================= -->
+      <!-- ================= 區塊一：新增記帳 ================= -->
       <div id="panel-record">
         <!-- 模式切換 -->
         <div class="mode-tabs">
           <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
           <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
           <button type="button" class="tab-btn" id="tab-credit" onclick="switchMode('credit')">刷卡</button>
-          <button type="button" class="tab-btn" id="tab-balance" onclick="switchMode('balance')">餘額查詢</button>
         </div>
 
-      <!-- ================= 餘額查詢 模式畫面 ================= -->
-      <div id="balance-mode-fields" class="hidden">
-        <!-- 總資產淨值卡片 -->
-        <div class="total-worth-card">
-          <div class="total-worth-header">
-            <span class="total-worth-title">💎 總資產淨值</span>
-            <button type="button" class="refresh-btn" onclick="refreshBalances()" title="重新整理餘額">
-              <span id="refresh-icon">🔄</span>
-            </button>
-          </div>
-          <div class="total-worth-amount" id="total-net-worth">$0</div>
-        </div>
-
-        <!-- 三階連動篩選器 -->
-        <div class="filter-section">
-          <div class="filter-title">🔍 篩選帳戶 (銀行 / 戶頭 / 名目)</div>
-          <div class="select-grid">
-            <select id="filter-bank" class="select-field" onchange="onFilterBankChange()">
-              <option value="">全部銀行</option>
-            </select>
-            <select id="filter-account" class="select-field" onchange="onFilterAccountChange()">
-              <option value="">全部戶頭</option>
-            </select>
-          </div>
-          <select id="filter-purpose" class="select-field" style="margin-top: 8px;" onchange="renderBalanceList()">
-            <option value="">全部名目用途</option>
-          </select>
-        </div>
-
-        <!-- 帳戶餘額卡片清單 -->
-        <div id="balance-list-container" class="balance-list-container">
-          <!-- 由 JS 動態生成 -->
-        </div>
-      </div>
-
-      <!-- ================= 交易記帳 表單 ================= -->
-      <form id="tx-form" onsubmit="handleFormSubmit(event)">
+        <!-- ================= 交易記帳 表單 ================= -->
+        <form id="tx-form" onsubmit="handleFormSubmit(event)">
         <!-- 交易日期 -->
         <div class="form-group" id="tx-date-group">
           <label class="form-label" for="tx-date">交易日期</label>
@@ -941,7 +910,42 @@
       </form>
       </div>
 
-      <!-- ================= 區塊二：查詢交易紀錄 ================= -->
+      <!-- ================= 區塊二：餘額查詢 ================= -->
+      <div id="panel-balance" class="hidden">
+        <!-- 總資產淨值卡片 -->
+        <div class="total-worth-card">
+          <div class="total-worth-header">
+            <span class="total-worth-title">💎 總資產淨值</span>
+            <button type="button" class="refresh-btn" onclick="refreshBalances()" title="重新整理餘額">
+              <span id="refresh-icon">🔄</span>
+            </button>
+          </div>
+          <div class="total-worth-amount" id="total-net-worth">$0</div>
+        </div>
+
+        <!-- 三階連動篩選器 -->
+        <div class="filter-section">
+          <div class="filter-title">🔍 篩選帳戶 (銀行 / 戶頭 / 名目)</div>
+          <div class="select-grid">
+            <select id="filter-bank" class="select-field" onchange="onFilterBankChange()">
+              <option value="">全部銀行</option>
+            </select>
+            <select id="filter-account" class="select-field" onchange="onFilterAccountChange()">
+              <option value="">全部戶頭</option>
+            </select>
+          </div>
+          <select id="filter-purpose" class="select-field" style="margin-top: 8px;" onchange="renderBalanceList()">
+            <option value="">全部名目用途</option>
+          </select>
+        </div>
+
+        <!-- 帳戶餘額卡片清單 -->
+        <div id="balance-list-container" class="balance-list-container">
+          <!-- 由 JS 動態生成 -->
+        </div>
+      </div>
+
+      <!-- ================= 區塊三：查詢交易紀錄 ================= -->
       <div id="panel-history" class="hidden">
         <div class="history-header">
           <div class="history-title-wrap">
@@ -990,8 +994,8 @@
 
   <script>
     // 全域狀態
-    let currentNavTab = 'record'; // 'record' | 'history'
-    let currentMode = 'single'; // 'single' | 'transfer' | 'credit' | 'balance'
+    let currentNavTab = 'record'; // 'record' | 'balance' | 'history'
+    let currentMode = 'single'; // 'single' | 'transfer' | 'credit'
     let currentType = 'expense'; // 'expense' | 'income'
     let accountRawData = [];
     let creditCardOptions = [];
@@ -1000,24 +1004,27 @@
     let recentTransactions = [];
     let isHistoryLoaded = false;
 
-    // 切換頂部大頁籤 (新增記帳 / 查詢紀錄)
+    // 切換頂部大頁籤 (新增記帳 / 餘額查詢 / 查詢紀錄)
     function switchNavTab(tab) {
       currentNavTab = tab;
       document.getElementById('tab-nav-record').classList.toggle('active', tab === 'record');
+      document.getElementById('tab-nav-balance').classList.toggle('active', tab === 'balance');
       document.getElementById('tab-nav-history').classList.toggle('active', tab === 'history');
 
       const panelRecord = document.getElementById('panel-record');
+      const panelBalance = document.getElementById('panel-balance');
       const panelHistory = document.getElementById('panel-history');
 
-      if (tab === 'history') {
-        panelRecord.classList.add('hidden');
-        panelHistory.classList.remove('hidden');
+      panelRecord.classList.toggle('hidden', tab !== 'record');
+      panelBalance.classList.toggle('hidden', tab !== 'balance');
+      panelHistory.classList.toggle('hidden', tab !== 'history');
+
+      if (tab === 'balance') {
+        renderBalanceList();
+      } else if (tab === 'history') {
         if (!isHistoryLoaded) {
           loadRecentTransactions();
         }
-      } else {
-        panelRecord.classList.remove('hidden');
-        panelHistory.classList.add('hidden');
       }
     }
 
@@ -1039,71 +1046,59 @@
       return isNeg ? `-$ ${absFormatted}` : `$ ${absFormatted}`;
     }
 
-    // 切換模式 (單筆 / 資金平移 / 信用卡刷卡 / 餘額查詢)
+    // 切換記帳模式 (單筆 / 資金平移 / 刷卡)
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById('tab-single').classList.toggle('active', mode === 'single');
       document.getElementById('tab-transfer').classList.toggle('active', mode === 'transfer');
       document.getElementById('tab-credit').classList.toggle('active', mode === 'credit');
-      document.getElementById('tab-balance').classList.toggle('active', mode === 'balance');
 
       const singleFields = document.getElementById('single-mode-fields');
       const transferFields = document.getElementById('transfer-mode-fields');
       const creditFields = document.getElementById('credit-mode-fields');
-      const balanceFields = document.getElementById('balance-mode-fields');
-      const txForm = document.getElementById('tx-form');
       const btnText = document.getElementById('btn-text');
       const descLabel = document.getElementById('tx-desc-label');
       const descInput = document.getElementById('tx-desc');
 
-      if (mode === 'balance') {
-        txForm.classList.add('hidden');
-        balanceFields.classList.remove('hidden');
-        renderBalanceList();
-      } else {
-        txForm.classList.remove('hidden');
-        balanceFields.classList.add('hidden');
+      singleFields.classList.toggle('hidden', mode !== 'single');
+      transferFields.classList.toggle('hidden', mode !== 'transfer');
+      creditFields.classList.toggle('hidden', mode !== 'credit');
 
-        singleFields.classList.toggle('hidden', mode !== 'single');
-        transferFields.classList.toggle('hidden', mode !== 'transfer');
-        creditFields.classList.toggle('hidden', mode !== 'credit');
+      // 單筆模式欄位驗證
+      const isSingle = mode === 'single';
+      document.getElementById('single-bank').required = isSingle;
+      document.getElementById('single-account').required = isSingle;
+      document.getElementById('single-purpose').required = isSingle;
 
-        // 單筆模式欄位驗證
-        const isSingle = mode === 'single';
-        document.getElementById('single-bank').required = isSingle;
-        document.getElementById('single-account').required = isSingle;
-        document.getElementById('single-purpose').required = isSingle;
+      // 平移模式欄位驗證
+      const isTransfer = mode === 'transfer';
+      document.getElementById('from-bank').required = isTransfer;
+      document.getElementById('from-account').required = isTransfer;
+      document.getElementById('from-purpose').required = isTransfer;
+      document.getElementById('to-bank').required = isTransfer;
+      document.getElementById('to-account').required = isTransfer;
+      document.getElementById('to-purpose').required = isTransfer;
 
-        // 平移模式欄位驗證
-        const isTransfer = mode === 'transfer';
-        document.getElementById('from-bank').required = isTransfer;
-        document.getElementById('from-account').required = isTransfer;
-        document.getElementById('from-purpose').required = isTransfer;
-        document.getElementById('to-bank').required = isTransfer;
-        document.getElementById('to-account').required = isTransfer;
-        document.getElementById('to-purpose').required = isTransfer;
+      // 刷卡模式欄位驗證
+      const isCredit = mode === 'credit';
+      document.getElementById('cc-bank').required = isCredit;
+      document.getElementById('cc-card').required = isCredit;
+      document.getElementById('cc-channel').required = isCredit;
+      document.getElementById('cc-item').required = isCredit;
 
-        // 信用卡模式欄位驗證
-        const isCredit = mode === 'credit';
-        document.getElementById('cc-bank').required = isCredit;
-        document.getElementById('cc-card').required = isCredit;
-        document.getElementById('cc-channel').required = isCredit;
-        document.getElementById('cc-item').required = isCredit;
-
-        // 動態切換按鈕文字與描述標籤
-        if (isSingle) {
-          btnText.textContent = '確認寫入交易';
-          if (descLabel) descLabel.textContent = '交易項目說明 (選填)';
-          if (descInput) descInput.placeholder = '例如：7月利息 / 儲蓄提撥';
-        } else if (isTransfer) {
-          btnText.textContent = '確認執行平移';
-          if (descLabel) descLabel.textContent = '平移原因說明 (選填)';
-          if (descInput) descInput.placeholder = '例如：ATM提款轉存 / 活存轉投資';
-        } else if (isCredit) {
-          btnText.textContent = '確認寫入刷卡紀錄';
-          if (descLabel) descLabel.textContent = '備註說明 (選填)';
-          if (descInput) descInput.placeholder = '例如：分期付款 / 優惠代碼 / 報帳用';
-        }
+      // 動態切換按鈕文字與描述標籤
+      if (isSingle) {
+        btnText.textContent = '確認寫入交易';
+        if (descLabel) descLabel.textContent = '交易項目說明 (選填)';
+        if (descInput) descInput.placeholder = '例如：7月利息 / 儲蓄提撥';
+      } else if (isTransfer) {
+        btnText.textContent = '確認執行平移';
+        if (descLabel) descLabel.textContent = '平移原因說明 (選填)';
+        if (descInput) descInput.placeholder = '例如：ATM提款轉存 / 活存轉投資';
+      } else if (isCredit) {
+        btnText.textContent = '確認寫入刷卡紀錄';
+        if (descLabel) descLabel.textContent = '備註說明 (選填)';
+        if (descInput) descInput.placeholder = '例如：分期付款 / 優惠代碼 / 報帳用';
       }
     }
 
