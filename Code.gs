@@ -554,13 +554,13 @@ function initCreditCardSheetsWithAutoBanks() {
     }
 
     // 設定資料驗證
-    // A 欄 (發卡銀行) 與 G 欄 (扣繳銀行)
+    // A 欄 (發卡銀行) 與 G 欄 (扣繳銀行) 動態開放範圍連動分頁 5 A 欄
     const bankRule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(bankList, true)
+      .requireValueInRange(assetSheet.getRange('A5:A'), true)
       .setAllowInvalid(true)
       .build();
-    cardSheet.getRange('A2:A100').setDataValidation(bankRule);
-    cardSheet.getRange('G2:G100').setDataValidation(bankRule);
+    cardSheet.getRange('A2:A500').setDataValidation(bankRule);
+    cardSheet.getRange('G2:G500').setDataValidation(bankRule);
 
     // I 欄 (狀態)
     const statusRule = SpreadsheetApp.newDataValidation()
@@ -758,19 +758,19 @@ function upgradeCreditCardCheckMechanism() {
       .setNumberFormat('yyyy/mm/dd')
       .setHorizontalAlignment('center');
 
-    // C 欄 (發卡銀行): 下拉選單連動分頁 8 A 欄 (A2:A100)
+    // C 欄 (發卡銀行): 下拉選單連動分頁 8 A 欄動態開放範圍 (A2:A)
     if (cardSheet) {
       const bankRule = SpreadsheetApp.newDataValidation()
-        .requireValueInRange(cardSheet.getRange('A2:A100'), true)
+        .requireValueInRange(cardSheet.getRange('A2:A'), true)
         .setAllowInvalid(true)
         .build();
       recordSheet.getRange('C2:C500').setDataValidation(bankRule);
     }
 
-    // D 欄 (卡片): 下拉選單連動分頁 8 D 欄 (D2:D100, 卡片辨識全名)
+    // D 欄 (卡片): 下拉選單連動分頁 8 D 欄動態開放範圍 (D2:D, 卡片辨識全名)
     if (cardSheet) {
       const cardRule = SpreadsheetApp.newDataValidation()
-        .requireValueInRange(cardSheet.getRange('D2:D100'), true)
+        .requireValueInRange(cardSheet.getRange('D2:D'), true)
         .setAllowInvalid(true)
         .build();
       recordSheet.getRange('D2:D500').setDataValidation(cardRule);
@@ -806,10 +806,10 @@ function upgradeCreditCardCheckMechanism() {
       .setNumberFormat('@')
       .setHorizontalAlignment('center');
 
-    // K 欄 (對應扣款名目): 下拉選單連動分頁 5 C 欄名目用途 (C5:C100)
+    // K 欄 (對應扣款名目): 下拉選單連動分頁 5 C 欄名目用途動態開放範圍 (C5:C)
     if (assetSheet) {
       const purposeRule = SpreadsheetApp.newDataValidation()
-        .requireValueInRange(assetSheet.getRange('C5:C100'), true)
+        .requireValueInRange(assetSheet.getRange('C5:C'), true)
         .setAllowInvalid(true)
         .build();
       recordSheet.getRange('K2:K500').setDataValidation(purposeRule);
@@ -1043,16 +1043,26 @@ function getBankAccountsMapFromAssetSheet(ss) {
 function updateCardAccountDropdownForRow(cardSheet, row, bank, bankMap) {
   if (!cardSheet || row < 2) return;
 
+  const ss = cardSheet.getParent();
   if (!bankMap) {
-    const ss = cardSheet.getParent();
     bankMap = getBankAccountsMapFromAssetSheet(ss);
   }
 
   const cellH = cardSheet.getRange(row, 8);
   const cleanBank = String(bank || '').trim();
 
+  // 若無指定銀行或分頁 5 無對應帳戶，套用分頁 5 B 欄動態開放範圍 $B$5:$B
   if (!cleanBank || !bankMap[cleanBank] || bankMap[cleanBank].accounts.length === 0) {
-    cellH.clearDataValidations();
+    const assetSheet = ss.getSheetByName(SHEET_NAMES.ASSET);
+    if (assetSheet) {
+      const openRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(assetSheet.getRange('B5:B'), true)
+        .setAllowInvalid(true)
+        .build();
+      cellH.setDataValidation(openRule);
+    } else {
+      cellH.clearDataValidations();
+    }
     return;
   }
 
@@ -1075,8 +1085,8 @@ function updateCardAccountDropdownForRow(cardSheet, row, bank, bankMap) {
 
 /**
  * 試算表編輯事件觸發器 (Simple Trigger)
- * 當使用者在「8. 信用卡卡片主檔」修改 G 欄（扣繳銀行）時，
- * 動態更新該列 H 欄（扣繳帳戶）之連動下拉選單並預設選取。
+ * 1. 當使用者在「8. 信用卡卡片主檔」修改 G 欄（扣繳銀行）時，即時更新該列 H 欄（扣繳帳戶）之連動下拉選單
+ * 2. 當使用者在「5. 帳戶資產淨值表」新增/修改銀行、帳戶或名目用途時，自動同步刷新全域下拉驗證清單
  */
 function onEdit(e) {
   try {
@@ -1085,16 +1095,24 @@ function onEdit(e) {
     const sheet = e.range.getSheet();
     const sheetName = sheet.getName();
 
-    // 僅監聽「8. 信用卡卡片主檔」
-    if (sheetName !== SHEET_NAMES.CC_CARDS) return;
+    // 1. 若在「8. 信用卡卡片主檔」編輯 G 欄（扣繳銀行）
+    if (sheetName === SHEET_NAMES.CC_CARDS) {
+      const row = e.range.getRow();
+      const col = e.range.getColumn();
 
-    const row = e.range.getRow();
-    const col = e.range.getColumn();
-
-    // 僅監聽 G 欄（第 7 欄：扣繳銀行）且列數 >= 2
-    if (col === 7 && row >= 2) {
-      const bank = e.range.getValue();
-      updateCardAccountDropdownForRow(sheet, row, bank);
+      // 僅監聽 G 欄（第 7 欄：扣繳銀行）且列數 >= 2
+      if (col === 7 && row >= 2) {
+        const bank = e.range.getValue();
+        updateCardAccountDropdownForRow(sheet, row, bank);
+      }
+    } 
+    // 2. 若在「5. 帳戶資產淨值表」編輯銀行、帳戶或名目 (第 5 列起，A/B/C 欄)
+    else if (sheetName === SHEET_NAMES.ASSET) {
+      const row = e.range.getRow();
+      const col = e.range.getColumn();
+      if (row >= 5 && (col === 1 || col === 2 || col === 3)) {
+        refreshCardAccountDropdowns();
+      }
     }
   } catch (err) {
     Logger.log('onEdit 執行失敗: ' + err.message);
@@ -1102,8 +1120,12 @@ function onEdit(e) {
 }
 
 /**
- * 一次性修復與批次刷新分頁「8. 信用卡卡片主檔」H 欄【扣繳帳戶】下拉選單：
- * 遍歷所有已填寫列，依據 G 欄扣繳銀行動態配置 H 欄下拉清單，並保留使用者已選或自動推薦扣繳帳戶。
+ * 一次性修復與批次刷新分頁「8. 信用卡卡片主檔」與「7. 信用卡消費明細」下拉選單：
+ * 1. 分頁 8 A 欄 (發卡銀行) 與 G 欄 (扣繳銀行)：動態開放範圍連動 '5. 帳戶資產淨值表'!$A$5:$A
+ * 2. 分頁 8 H 欄 (扣繳帳戶)：預設開放範圍 '5. 帳戶資產淨值表'!$B$5:$B，並針對已選銀行注入最新連動過濾清單
+ * 3. 分頁 7 C 欄 (發卡銀行)：動態開放範圍連動 '8. 信用卡卡片主檔'!$A$2:$A
+ * 4. 分頁 7 D 欄 (卡片)：動態開放範圍連動 '8. 信用卡卡片主檔'!$D$2:$D
+ * 5. 分頁 7 K 欄 (對應扣款名目)：動態開放範圍連動 '5. 帳戶資產淨值表'!$C$5:$C
  */
 function refreshCardAccountDropdowns() {
   try {
@@ -1113,36 +1135,80 @@ function refreshCardAccountDropdowns() {
     const cardSheet = ss.getSheetByName(SHEET_NAMES.CC_CARDS);
     if (!cardSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_CARDS}`);
 
+    const assetSheet = ss.getSheetByName(SHEET_NAMES.ASSET);
+    if (!assetSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.ASSET}`);
+
+    const recordSheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+
+    // 1. 分頁 8：A 欄 (發卡銀行) 與 G 欄 (扣繳銀行) 動態開放範圍 $A$5:$A
+    const bankOpenRule = SpreadsheetApp.newDataValidation()
+      .requireValueInRange(assetSheet.getRange('A5:A'), true)
+      .setAllowInvalid(true)
+      .build();
+    cardSheet.getRange('A2:A500').setDataValidation(bankOpenRule);
+    cardSheet.getRange('G2:G500').setDataValidation(bankOpenRule);
+
+    // 2. 分頁 8：H 欄預設開放範圍 $B$5:$B
+    const accountOpenRule = SpreadsheetApp.newDataValidation()
+      .requireValueInRange(assetSheet.getRange('B5:B'), true)
+      .setAllowInvalid(true)
+      .build();
+    cardSheet.getRange('H2:H500').setDataValidation(accountOpenRule);
+
+    // 讀取分頁 5 最新銀行與帳戶映射表（依據 getLastRow 動態取得邊界）
     const bankMap = getBankAccountsMapFromAssetSheet(ss);
-    const lastRow = cardSheet.getLastRow();
-    if (lastRow < 2) {
-      return { success: true, message: '分頁 8 目前無資料', updatedCount: 0 };
-    }
+    const lastRow = Math.max(cardSheet.getLastRow(), 2);
 
     const updatedRows = [];
     for (let r = 2; r <= lastRow; r++) {
       const bank = String(cardSheet.getRange(r, 7).getValue() || '').trim();
-      if (bank) {
+      if (bank && bankMap[bank] && bankMap[bank].accounts.length > 0) {
         updateCardAccountDropdownForRow(cardSheet, r, bank, bankMap);
         const acc = cardSheet.getRange(r, 8).getValue();
-        const choices = bankMap[bank] ? bankMap[bank].accounts : [];
+        const choices = bankMap[bank].accounts;
         updatedRows.push({ row: r, bank, account: acc, availableChoices: choices });
       }
+    }
+
+    // 3. 分頁 7：同步確保連動下拉選單皆採用動態開放範圍
+    if (recordSheet) {
+      // C 欄 (發卡銀行) 連動分頁 8 A 欄開放範圍 A2:A
+      const recBankRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(cardSheet.getRange('A2:A'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('C2:C500').setDataValidation(recBankRule);
+
+      // D 欄 (卡片) 連動分頁 8 D 欄開放範圍 D2:D
+      const recCardRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(cardSheet.getRange('D2:D'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('D2:D500').setDataValidation(recCardRule);
+
+      // K 欄 (對應扣款名目) 連動分頁 5 C 欄開放範圍 C5:C
+      const recPurposeRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(assetSheet.getRange('C5:C'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('K2:K500').setDataValidation(recPurposeRule);
     }
 
     SpreadsheetApp.flush();
 
     return {
       success: true,
-      message: `分頁 8 H 欄扣繳帳戶動態下拉選單刷新成功！共處理 ${updatedRows.length} 列。`,
-      updatedCount: updatedRows.length,
+      message: `分頁 8 與分頁 7 動態開放範圍驗證清單全域更新成功！`,
+      cardRowsProcessed: updatedRows.length,
+      bankCountInAssetSheet: Object.keys(bankMap).length,
+      bankMap: bankMap,
       details: updatedRows
     };
   } catch (error) {
     Logger.log('refreshCardAccountDropdowns 失敗: ' + error.message);
     return {
       success: false,
-      error: error.message || '刷新卡片扣繳帳戶下拉選單失敗'
+      error: error.message || '刷新動態下拉選單失敗'
     };
   }
 }
