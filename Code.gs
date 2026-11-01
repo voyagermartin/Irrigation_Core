@@ -427,6 +427,109 @@ function getRecentTransactions(limit) {
 }
 
 /**
+ * 讀取「7. 信用卡消費明細」最新 N 筆資料（預設 30 筆），依時間倒序傳回 JSON 陣列與待撥款總額
+ * @param {number} [limit=30] 讀取筆數上限
+ * @param {string} [statusFilter=''] 撥款狀態篩選 ('待撥款' | '已撥款' | '')
+ * @returns {Object} 包含信用卡交易陣列與待撥款總額之 JSON 物件
+ */
+function getCreditCardTransactions(limit, statusFilter) {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!sheet) {
+      throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      return {
+        success: true,
+        pendingAmount: 0,
+        data: []
+      };
+    }
+
+    const totalDataRows = lastRow - 1;
+    // 讀取 A 到 L (12 欄)
+    const allValues = sheet.getRange(2, 1, totalDataRows, 12).getValues();
+
+    let pendingAmount = 0;
+    const collected = [];
+
+    // 計算待撥款總額，並倒序收集符合條件的資料
+    for (let i = allValues.length - 1; i >= 0; i--) {
+      const row = allValues[i];
+      const isChecked = Boolean(row[0]);
+      const rawDate = row[1];
+      let formattedDate = '';
+      if (rawDate instanceof Date) {
+        formattedDate = formatDate(rawDate);
+      } else if (rawDate) {
+        formattedDate = String(rawDate).trim();
+      }
+
+      const bank = String(row[2] || '').trim();
+      const card = String(row[3] || '').trim();
+      const item = String(row[4] || '').trim();
+      const channel = String(row[5] || '').trim();
+      const amount = Number(row[6]) || 0;
+      const status = String(row[7] || '').trim() || '待撥款';
+      const transferDate = row[8] instanceof Date ? formatDate(row[8]) : String(row[8] || '').trim();
+      const billCycle = String(row[9] || '').trim();
+      const purpose = String(row[10] || '').trim();
+      const note = String(row[11] || '').trim();
+
+      // 累計待撥款總額（全表待撥款總合）
+      if (status === '待撥款') {
+        pendingAmount += amount;
+      }
+
+      // 排除全空白列
+      if (!bank && !card && !amount) {
+        continue;
+      }
+
+      // 撥款狀態篩選
+      if (statusFilter && status !== statusFilter) {
+        continue;
+      }
+
+      collected.push({
+        checked: isChecked,
+        date: formattedDate,
+        bank: bank,
+        card: card,
+        item: item,
+        channel: channel,
+        amount: amount,
+        status: status,
+        transferDate: transferDate,
+        billCycle: billCycle,
+        purpose: purpose,
+        note: note
+      });
+    }
+
+    const maxCount = (typeof limit === 'number' && limit > 0) ? Math.floor(limit) : 30;
+    const data = collected.slice(0, maxCount);
+
+    return {
+      success: true,
+      pendingAmount: pendingAmount,
+      data: data
+    };
+  } catch (error) {
+    Logger.log('getCreditCardTransactions 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '讀取信用卡消費紀錄失敗',
+      pendingAmount: 0,
+      data: []
+    };
+  }
+}
+
+/**
  * 輔助函式：格式化日期為 YYYY/MM/DD
  */
 function formatDate(dateObj) {

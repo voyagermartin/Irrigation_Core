@@ -713,6 +713,110 @@
       word-break: break-word;
     }
 
+    /* Pending Summary Card */
+    .pending-summary-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin-bottom: 14px;
+    }
+
+    .pending-summary-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fbbf24;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .pending-summary-amount {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fef3c7;
+      letter-spacing: -0.5px;
+    }
+
+    .pending-count-badge {
+      background: rgba(245, 158, 11, 0.25);
+      color: #fcd34d;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.775rem;
+      font-weight: 700;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    /* Credit Card Status and Tag Badges */
+    .status-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .status-badge.transferred {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .status-badge.checked {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+
+    .tag-channel {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.725rem;
+      font-weight: 600;
+    }
+
+    .tag-card {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .tag-item {
+      color: #f1f5f9;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .tag-transfer-date {
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
+
+    .tx-amount.credit {
+      color: #f87171;
+    }
+
+    .tx-card.transferred-row {
+      opacity: 0.72;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
     /* Helper utility classes */
     .hidden {
       display: none !important;
@@ -947,41 +1051,93 @@
 
       <!-- ================= 區塊三：查詢交易紀錄 ================= -->
       <div id="panel-history" class="hidden">
-        <div class="history-header">
-          <div class="history-title-wrap">
-            <span class="history-title">最近交易紀錄</span>
-            <span class="history-subtitle">顯示最新 50 筆交易</span>
+        <!-- 次級切換按鈕：一般流水帳 vs 信用卡明細 -->
+        <div class="mode-tabs" style="margin-bottom: 16px;">
+          <button type="button" class="tab-btn active" id="tab-history-general" onclick="switchHistorySubTab('general')">一般流水帳</button>
+          <button type="button" class="tab-btn" id="tab-history-credit" onclick="switchHistorySubTab('credit')">💳 信用卡明細</button>
+        </div>
+
+        <!-- 一般流水帳檢視區塊 -->
+        <div id="history-general-view">
+          <div class="history-header">
+            <div class="history-title-wrap">
+              <span class="history-title">最近交易紀錄</span>
+              <span class="history-subtitle">顯示最新 50 筆一般交易</span>
+            </div>
+            <button type="button" class="refresh-btn" onclick="loadRecentTransactions(true)" title="重新整理紀錄">
+              <span id="history-refresh-icon">🔄</span>
+            </button>
           </div>
-          <button type="button" class="refresh-btn" onclick="loadRecentTransactions(true)" title="重新整理紀錄">
-            <span id="history-refresh-icon">🔄</span>
-          </button>
-        </div>
 
-        <!-- 三階連動篩選器 -->
-        <div class="filter-section">
-          <div class="filter-title">🔍 篩選紀錄 (銀行 / 戶頭 / 名目)</div>
-          <div class="select-grid">
-            <select id="tx-filter-bank" class="select-field" onchange="onTxFilterBankChange()">
-              <option value="">全部銀行</option>
-            </select>
-            <select id="tx-filter-account" class="select-field" onchange="onTxFilterAccountChange()">
-              <option value="">全部戶頭</option>
+          <!-- 三階連動篩選器 -->
+          <div class="filter-section">
+            <div class="filter-title">🔍 篩選紀錄 (銀行 / 戶頭 / 名目)</div>
+            <div class="select-grid">
+              <select id="tx-filter-bank" class="select-field" onchange="onTxFilterBankChange()">
+                <option value="">全部銀行</option>
+              </select>
+              <select id="tx-filter-account" class="select-field" onchange="onTxFilterAccountChange()">
+                <option value="">全部戶頭</option>
+              </select>
+            </div>
+            <select id="tx-filter-purpose" class="select-field" style="margin-top: 8px;" onchange="renderRecentTransactions()">
+              <option value="">全部名目用途</option>
             </select>
           </div>
-          <select id="tx-filter-purpose" class="select-field" style="margin-top: 8px;" onchange="renderRecentTransactions()">
-            <option value="">全部名目用途</option>
-          </select>
+
+          <!-- 載入中狀態 -->
+          <div id="history-loading" class="history-loading hidden">
+            <div class="spinner history-spinner"></div>
+            <span>讀取交易紀錄中...</span>
+          </div>
+
+          <!-- 卡片清單容器 -->
+          <div id="history-list-container" class="history-list-container">
+            <!-- 由 JS 動態生成 -->
+          </div>
         </div>
 
-        <!-- 載入中狀態 -->
-        <div id="history-loading" class="history-loading hidden">
-          <div class="spinner history-spinner"></div>
-          <span>讀取交易紀錄中...</span>
-        </div>
+        <!-- 信用卡明細檢視區塊 -->
+        <div id="history-credit-view" class="hidden">
+          <div class="history-header">
+            <div class="history-title-wrap">
+              <span class="history-title">信用卡消費明細</span>
+              <span class="history-subtitle">顯示最新 30 筆刷卡紀錄</span>
+            </div>
+            <button type="button" class="refresh-btn" onclick="loadCreditCardTransactions(true)" title="重新整理信用卡明細">
+              <span id="cc-history-refresh-icon">🔄</span>
+            </button>
+          </div>
 
-        <!-- 卡片清單容器 -->
-        <div id="history-list-container" class="history-list-container">
-          <!-- 由 JS 動態生成 -->
+          <!-- 頂部【未撥款總金額】統計 Badge 卡片 -->
+          <div class="pending-summary-card">
+            <div class="pending-summary-left">
+              <span class="pending-summary-title">⏳ 待撥款總額</span>
+              <span class="pending-summary-amount" id="cc-pending-total">$0</span>
+            </div>
+            <div class="pending-summary-right">
+              <span class="pending-count-badge" id="cc-pending-count">0 筆待撥</span>
+            </div>
+          </div>
+
+          <!-- 發卡銀行即時過濾選單 -->
+          <div class="filter-section">
+            <div class="filter-title">🔍 依發卡銀行篩選</div>
+            <select id="cc-filter-bank" class="select-field" onchange="renderCreditCardTransactions()">
+              <option value="">全部發卡銀行</option>
+            </select>
+          </div>
+
+          <!-- 載入中狀態 -->
+          <div id="cc-history-loading" class="history-loading hidden">
+            <div class="spinner history-spinner"></div>
+            <span>讀取信用卡明細中...</span>
+          </div>
+
+          <!-- 信用卡卡片清單容器 -->
+          <div id="cc-history-list-container" class="history-list-container">
+            <!-- 由 JS 動態生成 -->
+          </div>
         </div>
       </div>
     </div>
@@ -997,12 +1153,16 @@
     let currentNavTab = 'record'; // 'record' | 'balance' | 'history'
     let currentMode = 'single'; // 'single' | 'transfer' | 'credit'
     let currentType = 'expense'; // 'expense' | 'income'
+    let historySubTab = 'general'; // 'general' | 'credit'
     let accountRawData = [];
     let creditCardOptions = [];
     let deductPurposes = [];
     let totalNetWorth = 0;
     let recentTransactions = [];
     let isHistoryLoaded = false;
+    let creditTransactions = [];
+    let creditPendingAmount = 0;
+    let isCreditHistoryLoaded = false;
 
     // 切換頂部大頁籤 (新增記帳 / 餘額查詢 / 查詢紀錄)
     function switchNavTab(tab) {
@@ -1022,8 +1182,38 @@
       if (tab === 'balance') {
         renderBalanceList();
       } else if (tab === 'history') {
+        if (historySubTab === 'general') {
+          if (!isHistoryLoaded) loadRecentTransactions();
+        } else {
+          if (!isCreditHistoryLoaded) loadCreditCardTransactions();
+        }
+      }
+    }
+
+    // 切換查詢紀錄次級頁籤 (一般流水帳 / 信用卡明細)
+    function switchHistorySubTab(subTab) {
+      historySubTab = subTab;
+      document.getElementById('tab-history-general').classList.toggle('active', subTab === 'general');
+      document.getElementById('tab-history-credit').classList.toggle('active', subTab === 'credit');
+
+      const generalView = document.getElementById('history-general-view');
+      const creditView = document.getElementById('history-credit-view');
+
+      if (subTab === 'credit') {
+        generalView.classList.add('hidden');
+        creditView.classList.remove('hidden');
+        if (!isCreditHistoryLoaded) {
+          loadCreditCardTransactions();
+        } else {
+          renderCreditCardTransactions();
+        }
+      } else {
+        generalView.classList.remove('hidden');
+        creditView.classList.add('hidden');
         if (!isHistoryLoaded) {
           loadRecentTransactions();
+        } else {
+          renderRecentTransactions();
         }
       }
     }
@@ -1647,6 +1837,11 @@
         document.getElementById('tx-amount').value = '';
         document.getElementById('tx-desc').value = '';
         document.getElementById('cc-item').value = '';
+
+        // 若已載入過信用卡消費紀錄，同步重新整理
+        if (isCreditHistoryLoaded) {
+          loadCreditCardTransactions();
+        }
       } else {
         showToast(response ? response.error : '寫入失敗', 'error');
       }
@@ -1792,6 +1987,150 @@
                 <span class="tag-purpose">${tx.purpose}</span>
               </div>
               ${tx.description ? `<div class="tx-desc-row">💬 ${escapeHtml(tx.description)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ================= 信用卡消費紀錄查詢邏輯 =================
+    function loadCreditCardTransactions(isRefresh = false) {
+      const refreshIcon = document.getElementById('cc-history-refresh-icon');
+      const loadingElem = document.getElementById('cc-history-loading');
+      const listContainer = document.getElementById('cc-history-list-container');
+
+      if (refreshIcon) refreshIcon.style.animation = 'spin 0.8s linear infinite';
+      if (loadingElem) loadingElem.classList.remove('hidden');
+      if (listContainer) listContainer.classList.add('hidden');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => onCreditCardTransactionsLoaded(res, isRefresh))
+          .withFailureHandler(onCreditCardTransactionsFailed)
+          .getCreditCardTransactions(30);
+      } else {
+        // 本地開發模擬資料
+        setTimeout(() => {
+          onCreditCardTransactionsLoaded({
+            success: true,
+            pendingAmount: 12450,
+            data: [
+              { checked: false, date: '2026/11/01', bank: '永豐', card: 'SPORT (8005)', item: '超商消費', channel: 'Apple Pay', amount: 120, status: '待撥款', transferDate: '', billCycle: '2026-11', purpose: '信用卡扣繳戶', note: '早餐' },
+              { checked: true, date: '2026/10/30', bank: '玉山', card: 'UBear (9065)', item: '網路購物', channel: '網路購物', amount: 3500, status: '待撥款', transferDate: '', billCycle: '2026-10', purpose: '固定開銷', note: '日用品補貨' },
+              { checked: true, date: '2026/10/25', bank: '台新', card: '＠GOGO (7803)', item: '外食餐飲', channel: 'LINE Pay', amount: 880, status: '已撥款', transferDate: '2026/10/27', billCycle: '2026-10', purpose: '日常開銷', note: '聚餐' }
+            ]
+          }, isRefresh);
+        }, 500);
+      }
+    }
+
+    function onCreditCardTransactionsLoaded(response, isRefresh = false) {
+      const refreshIcon = document.getElementById('cc-history-refresh-icon');
+      const loadingElem = document.getElementById('cc-history-loading');
+      const listContainer = document.getElementById('cc-history-list-container');
+
+      if (refreshIcon) refreshIcon.style.animation = 'none';
+      if (loadingElem) loadingElem.classList.add('hidden');
+      if (listContainer) listContainer.classList.remove('hidden');
+
+      if (!response || !response.success) {
+        showToast(response ? response.error : '載入信用卡消費明細失敗', 'error');
+        return;
+      }
+
+      creditTransactions = response.data || [];
+      creditPendingAmount = Number(response.pendingAmount) || 0;
+      isCreditHistoryLoaded = true;
+
+      // 更新待撥款總額與待撥筆數
+      const pendingTotalElem = document.getElementById('cc-pending-total');
+      const pendingCountElem = document.getElementById('cc-pending-count');
+      if (pendingTotalElem) {
+        pendingTotalElem.textContent = formatCurrency(creditPendingAmount);
+      }
+      if (pendingCountElem) {
+        const pendingCount = creditTransactions.filter(t => t.status === '待撥款').length;
+        pendingCountElem.textContent = `${pendingCount} 筆待撥`;
+      }
+
+      populateCcFilterBanks();
+      renderCreditCardTransactions();
+
+      if (isRefresh) {
+        showToast('信用卡明細已同步最新狀態！', 'success');
+      }
+    }
+
+    function onCreditCardTransactionsFailed(error) {
+      const refreshIcon = document.getElementById('cc-history-refresh-icon');
+      const loadingElem = document.getElementById('cc-history-loading');
+      const listContainer = document.getElementById('cc-history-list-container');
+
+      if (refreshIcon) refreshIcon.style.animation = 'none';
+      if (loadingElem) loadingElem.classList.add('hidden');
+      if (listContainer) listContainer.classList.remove('hidden');
+
+      showToast('載入失敗: ' + (error.message || error), 'error');
+    }
+
+    function populateCcFilterBanks() {
+      const bankElem = document.getElementById('cc-filter-bank');
+      if (!bankElem) return;
+
+      const currentSelected = bankElem.value;
+      const banks = [...new Set(creditTransactions.map(tx => tx.bank).filter(Boolean))];
+      bankElem.innerHTML = '<option value="">全部發卡銀行</option>' +
+        banks.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      if (banks.includes(currentSelected)) {
+        bankElem.value = currentSelected;
+      }
+    }
+
+    function renderCreditCardTransactions() {
+      const container = document.getElementById('cc-history-list-container');
+      if (!container) return;
+
+      const filterBank = document.getElementById('cc-filter-bank') ? document.getElementById('cc-filter-bank').value : '';
+
+      let list = creditTransactions;
+      if (filterBank) {
+        list = list.filter(t => t.bank === filterBank);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty-state">尚無符合條件的信用卡消費明細</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(tx => {
+        const isPending = tx.status === '待撥款';
+        const statusClass = isPending ? 'pending' : 'transferred';
+        const formattedAmount = `$ ${Number(tx.amount || 0).toLocaleString('zh-TW')}`;
+        const checkTag = tx.checked ? '<span class="status-badge checked">✔ 已核對</span>' : '';
+
+        return `
+          <div class="tx-card ${isPending ? '' : 'transferred-row'}">
+            <div class="tx-card-header">
+              <div class="tx-date-badge">
+                <span>📅 ${tx.date || '---'}</span>
+                <span class="status-badge ${statusClass}">${tx.status}</span>
+                ${checkTag}
+              </div>
+              <div class="tx-amount credit">${formattedAmount}</div>
+            </div>
+            <div class="tx-card-body">
+              <div class="tx-account-row">
+                <span>🏦 ${tx.bank}</span>
+                <span class="tag-card">${escapeHtml(tx.card)}</span>
+                <span class="tag-item">🛒 ${escapeHtml(tx.item)}</span>
+              </div>
+              <div class="tx-account-row" style="margin-top: 5px; font-size: 0.8rem; color: var(--text-secondary); gap: 8px;">
+                <span class="tag-channel">🏷️ ${escapeHtml(tx.channel)}</span>
+                <span class="tag-purpose">📌 ${escapeHtml(tx.purpose || '信用卡扣繳戶')}</span>
+                ${tx.transferDate ? `<span class="tag-transfer-date">📅 撥款日：${tx.transferDate}</span>` : ''}
+              </div>
+              ${tx.note ? `<div class="tx-desc-row" style="margin-top: 6px;">💬 ${escapeHtml(tx.note)}</div>` : ''}
             </div>
           </div>
         `;
