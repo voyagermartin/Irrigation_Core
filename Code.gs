@@ -530,11 +530,13 @@ function getCreditCardTransactions(limit, statusFilter) {
     const allValues = sheet.getRange(2, 1, totalDataRows, 12).getValues();
 
     let pendingAmount = 0;
+    const pendingByPurpose = {};
     const collected = [];
 
-    // 計算待撥款總額，並倒序收集符合條件的資料
+    // 計算待撥款總額與各名目待撥統計，並倒序收集符合條件的資料
     for (let i = allValues.length - 1; i >= 0; i--) {
       const row = allValues[i];
+      const actualRowIndex = i + 2; // 試算表實際列號
       const isChecked = Boolean(row[0]);
       const rawDate = row[1];
       let formattedDate = '';
@@ -552,12 +554,13 @@ function getCreditCardTransactions(limit, statusFilter) {
       const status = String(row[7] || '').trim() || '待撥款';
       const transferDate = row[8] instanceof Date ? formatDate(row[8]) : String(row[8] || '').trim();
       const billCycle = String(row[9] || '').trim();
-      const purpose = String(row[10] || '').trim();
+      const purpose = String(row[10] || '').trim() || '信用卡扣繳戶';
       const note = String(row[11] || '').trim();
 
-      // 累計待撥款總額（全表待撥款總合）
+      // 累計待撥款總額與各名目待撥統計
       if (status === '待撥款') {
         pendingAmount += amount;
+        pendingByPurpose[purpose] = (pendingByPurpose[purpose] || 0) + amount;
       }
 
       // 排除全空白列
@@ -571,6 +574,7 @@ function getCreditCardTransactions(limit, statusFilter) {
       }
 
       collected.push({
+        rowIndex: actualRowIndex,
         checked: isChecked,
         date: formattedDate,
         bank: bank,
@@ -592,7 +596,10 @@ function getCreditCardTransactions(limit, statusFilter) {
     return {
       success: true,
       pendingAmount: pendingAmount,
-      data: data
+      totalPending: pendingAmount,
+      pendingByPurpose: pendingByPurpose,
+      data: data,
+      transactions: data
     };
   } catch (error) {
     Logger.log('getCreditCardTransactions 失敗: ' + error.message);
@@ -600,7 +607,64 @@ function getCreditCardTransactions(limit, statusFilter) {
       success: false,
       error: error.message || '讀取信用卡消費紀錄失敗',
       pendingAmount: 0,
-      data: []
+      totalPending: 0,
+      pendingByPurpose: {},
+      data: [],
+      transactions: []
+    };
+  }
+}
+
+/**
+ * 批次更新指定列號之信用卡消費明細為「已撥款」並寫入調度日期
+ * @param {number[]} rowIndices 試算表列號陣列
+ * @param {string} [transferDate] 撥款調度日期（格式 YYYY/MM/DD 或 YYYY-MM-DD，預設今日）
+ * @returns {Object} 執行結果
+ */
+function batchUpdateCreditCardTransfer(rowIndices, transferDate) {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+    const sheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!sheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+
+    if (!rowIndices || !Array.isArray(rowIndices) || rowIndices.length === 0) {
+      throw new Error('未提供欲標記為已撥款的紀錄列號');
+    }
+
+    const maxRows = sheet.getMaxRows();
+    const validRows = rowIndices
+      .map(r => Number(r))
+      .filter(r => !isNaN(r) && r >= 2 && r <= maxRows);
+
+    if (validRows.length === 0) {
+      throw new Error('所提供的列號皆無效');
+    }
+
+    const dateStr = transferDate ? transferDate.replace(/-/g, '/') : formatDate(new Date());
+
+    let updatedCount = 0;
+    validRows.forEach(row => {
+      // H 欄 (第 8 欄): 撥款狀態 ➔ 已撥款
+      sheet.getRange(row, 8).setValue('已撥款');
+      // I 欄 (第 9 欄): 撥款調度日期 ➔ dateStr
+      sheet.getRange(row, 9).setValue(dateStr);
+      sheet.getRange(row, 9).setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+      updatedCount++;
+    });
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      updatedCount: updatedCount,
+      message: `已成功將 ${updatedCount} 筆消費標記為已撥款！`
+    };
+  } catch (error) {
+    Logger.log('batchUpdateCreditCardTransfer 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '批次撥款更新失敗'
     };
   }
 }

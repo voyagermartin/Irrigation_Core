@@ -37,7 +37,8 @@
 * `getAccountOptions()`: 讀取分頁 5、分頁 8 與分頁 7，動態回傳當前餘額、總資產淨值、信用卡選單 (`creditCards`)、扣款名目 (`deductPurposes`)、消費項目 (`creditItems`) 與支付通道 (`creditChannels`)。
 * `recordTransaction(payload)`: 單筆記帳與資金平移（拆解轉出/轉入雙筆紀錄）寫入分頁 4。
 * `recordCreditCardTransaction(payload)`: 寫入分頁 7 信用卡明細（自動配置 Checkbox、格式與待撥款狀態）。
-* `getCreditCardTransactions(limit, statusFilter)`: 讀取「7. 信用卡消費明細」最新 N 筆資料（預設 30 筆），倒序回傳包含消費詳情、核對狀態、撥款狀態與待撥款總額 (`pendingAmount`) 之 JSON。
+* `getCreditCardTransactions(limit, statusFilter)`: 讀取分頁 7 最新 N 筆明細，回傳每筆資料之實際列號 (`rowIndex`)、核對與撥款狀態、全表待撥總額 (`totalPending`) 及各名目待撥款額統計 (`pendingByPurpose`)。
+* `batchUpdateCreditCardTransfer(rowIndices, transferDate)`: 接收前端傳入的試算表列號陣列，批次將分頁 7 H 欄撥款狀態更新為「已撥款」並填入 I 欄調度日期。
 * `getRecentTransactions(limit)`: 倒序讀取分頁 4 最近 N 筆交易（預設 50 筆）提供前端卡片檢索。
 * `onEdit(e)`: 試算表事件驅動：
   1. 分頁 8 修改扣繳銀行時，即時更新該列扣繳帳戶專屬選單；
@@ -70,13 +71,13 @@
   * `[💎 餘額查詢]`：💎 總資產淨值卡片、🔄 一鍵刷新、銀行/戶頭/名目三階連動篩選器、帳戶餘額卡片清單。
   * `[📜 查詢紀錄]`：內建次級切換 `[一般流水帳]` 與 `[💳 信用卡明細]`。
     * **一般流水帳**：最新 50 筆明細、銀行/戶頭/名目三階連動篩選器、Mobile-First 收支雙色卡片流。
-    * **信用卡明細**：頂部【未撥款總金額】統計 Badge（即時統計待撥款累計金額與筆數）、發卡銀行即時篩選選單、刷卡消費卡片流（日期、銀行卡片、項目、通道標籤、扣款名目、待撥款/已撥款狀態 Badge 與金額）。
+    * **信用卡明細**：頂部【未撥款總金額】統計 Badge（即時統計待撥款累計金額與筆數）、各名目待撥款額 Chips 看板（可點選切換特定名目篩選）、發卡銀行即時篩選選單、待撥款卡片 Checkbox 勾選操作、手機端底部浮動批次撥款操作列（顯示已選 X 筆合計 $Y，支援一鍵標記為已撥款）。
 
 ---
 
 ## ⑦ Version & Roadmap
-* **當前版本**: **`v1.5.0-beta`** (補齊 Web App 信用卡消費明細查詢、待撥款統計與發卡行過濾)
-* **GAS 部署**: Release `@40`
+* **當前版本**: **`v1.5.0-final`** (信用卡全端完整閉環：消費錄入、名目待撥統計看板、Chips 點擊切換篩選與手機端勾選批次撥款)
+* **GAS 部署**: Release `@45`
 * **里程碑路線圖**:
   * [x] **v1.0.0**: 雙維架構確立、單筆與資金平移、GitHub Pages 無標籤包裹層。
   * [x] **v1.1.0**: 餘額查詢模式、總資產淨值卡片與即時餘額 Badge。
@@ -85,13 +86,18 @@
   * [x] **v1.4.0 ~ v1.4.1**: 交易紀錄查詢卡片流與三階連動篩選器。
   * [x] **v1.5.0**: 信用卡模組全端上線（分頁 7/8、逐筆對帳看板、動態開放範圍驗證、Web App 刷卡輸入與頂部三頁籤重構）。
   * [x] **v1.5.0-beta**: Web App 信用卡消費紀錄查詢、未撥款總額統計 Badge 與發卡銀行即時過濾。
+  * [x] **v1.5.0-final**: 各名目待撥統計看板、Chips 點擊切換篩選、待撥款勾選與手機端底部浮動批次核銷撥款。
   * [ ] **Next Sprint**:
-    * 評估 Web App 端信用卡「批次撥款調度」核銷介面。
     * 評估 Web App 端「活儲水位監控看板」視覺化儀表板。
 
 ---
 
 ## ⑧ Changelog (Major Releases)
+* **v1.5.0-final (2026/11/01)**:
+  * 後端擴充 `getCreditCardTransactions`，回傳每筆紀錄之試算表實際列號 `rowIndex`、`totalPending` 與各名目統計 `pendingByPurpose`。
+  * 後端新增 `batchUpdateCreditCardTransfer` API，接收列號陣列批次將狀態更新為「已撥款」並寫入調度日期。
+  * 前端新增各名目待撥款額 Chips 看板，支援點擊特定名目即時篩選下方明細（再次點擊取消篩選）。
+  * 前端待撥款卡片開放 Checkbox 勾選，勾選時底部即時浮現批次操作列（`已選 X 筆，合計 $Y 元`），支援一鍵執行批次撥款與全自動清單刷新。
 * **v1.5.0-beta (2026/11/01)**:
   * 後端新增 `getCreditCardTransactions` API，回傳最新 30 筆信用卡明細與全表未撥款總金額。
   * 前端【查詢紀錄】增設 `[一般流水帳]` 與 `[💳 信用卡明細]` 次級切換。

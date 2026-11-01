@@ -817,6 +817,179 @@
       background: rgba(15, 23, 42, 0.4);
     }
 
+    /* Purpose Chips Container */
+    .purpose-chips-container {
+      margin-bottom: 14px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+
+    .purpose-chips-title {
+      font-size: 0.775rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .purpose-chips-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .purpose-chip {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.775rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+
+    .purpose-chip:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(30, 41, 59, 0.95);
+      color: #f8fafc;
+    }
+
+    .purpose-chip.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.35) 100%);
+      border-color: #818cf8;
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .purpose-chip-amount {
+      color: #f59e0b;
+      font-weight: 700;
+    }
+
+    .purpose-chip.active .purpose-chip-amount {
+      color: #fde047;
+    }
+
+    .purpose-chip-empty {
+      font-size: 0.775rem;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* Card Checkbox & Selection */
+    .tx-checkbox {
+      width: 17px;
+      height: 17px;
+      accent-color: #10b981;
+      cursor: pointer;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .tx-card.selected-card {
+      border-color: rgba(16, 185, 129, 0.6);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(30, 41, 59, 0.8) 100%);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+    }
+
+    /* Floating Batch Action Bar */
+    .batch-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 480px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: var(--radius-lg);
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.65), 0 0 18px rgba(16, 185, 129, 0.25);
+      z-index: 999;
+      animation: batchSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .batch-bar.hidden {
+      display: none !important;
+    }
+
+    .batch-bar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .batch-bar-count {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .batch-bar-count strong {
+      color: #f8fafc;
+      font-size: 0.95rem;
+    }
+
+    .batch-bar-total {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .batch-bar-total strong {
+      color: #34d399;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .btn-batch-transfer {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      font-size: 0.925rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-batch-transfer:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    .btn-batch-transfer:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @keyframes batchSlideUp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 25px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
     /* Helper utility classes */
     .hidden {
       display: none !important;
@@ -1120,6 +1293,14 @@
             </div>
           </div>
 
+          <!-- 各名目待撥看板 (Chips 標籤) -->
+          <div class="purpose-chips-container" id="cc-purpose-chips-container">
+            <div class="purpose-chips-title">📌 各名目待撥款額（點擊切換篩選）：</div>
+            <div class="purpose-chips-list" id="cc-purpose-chips">
+              <!-- 由 JS 動態生成 -->
+            </div>
+          </div>
+
           <!-- 發卡銀行即時過濾選單 -->
           <div class="filter-section">
             <div class="filter-title">🔍 依發卡銀行篩選</div>
@@ -1143,6 +1324,18 @@
     </div>
   </div>
 
+  <!-- 信用卡手機端批次撥款浮動操作列 -->
+  <div id="cc-batch-bar" class="batch-bar hidden">
+    <div class="batch-bar-info">
+      <span class="batch-bar-count">已選 <strong id="batch-selected-count">0</strong> 筆待撥</span>
+      <span class="batch-bar-total">合計 <strong id="batch-selected-total">$0</strong></span>
+    </div>
+    <button type="button" id="btn-batch-transfer" class="btn-batch-transfer" onclick="executeBatchTransfer()">
+      <span id="batch-btn-spinner" class="spinner btn-spinner hidden"></span>
+      <span id="batch-btn-text">標記為已撥款</span>
+    </button>
+  </div>
+
   <!-- Toast 訊息通知 -->
   <div id="toast" class="toast">
     <span id="toast-msg">提示訊息</span>
@@ -1164,6 +1357,9 @@
     let isHistoryLoaded = false;
     let creditTransactions = [];
     let creditPendingAmount = 0;
+    let creditPendingByPurpose = {};
+    let filterPurpose = '';
+    let selectedCreditRows = new Map(); // rowIndex -> amount
     let isCreditHistoryLoaded = false;
 
     // 切換頂部大頁籤 (新增記帳 / 餘額查詢 / 查詢紀錄)
@@ -1190,6 +1386,9 @@
           if (!isCreditHistoryLoaded) loadCreditCardTransactions();
         }
       }
+
+      // 控制浮動批次撥款列之顯示狀態
+      updateBatchBar();
     }
 
     // 切換查詢紀錄次級頁籤 (一般流水帳 / 信用卡明細)
@@ -1218,6 +1417,9 @@
           renderRecentTransactions();
         }
       }
+
+      // 控制浮動批次撥款列之顯示狀態
+      updateBatchBar();
     }
 
     // 初始化頁面
@@ -2039,11 +2241,16 @@
         setTimeout(() => {
           onCreditCardTransactionsLoaded({
             success: true,
-            pendingAmount: 12450,
+            totalPending: 3620,
+            pendingAmount: 3620,
+            pendingByPurpose: {
+              '信用卡扣繳戶': 120,
+              '固定開銷': 3500
+            },
             data: [
-              { checked: false, date: '2026/11/01', bank: '永豐', card: 'SPORT (8005)', item: '超商消費', channel: 'Apple Pay', amount: 120, status: '待撥款', transferDate: '', billCycle: '2026-11', purpose: '信用卡扣繳戶', note: '早餐' },
-              { checked: true, date: '2026/10/30', bank: '玉山', card: 'UBear (9065)', item: '網路購物', channel: '網路購物', amount: 3500, status: '待撥款', transferDate: '', billCycle: '2026-10', purpose: '固定開銷', note: '日用品補貨' },
-              { checked: true, date: '2026/10/25', bank: '台新', card: '＠GOGO (7803)', item: '外食餐飲', channel: 'LINE Pay', amount: 880, status: '已撥款', transferDate: '2026/10/27', billCycle: '2026-10', purpose: '日常開銷', note: '聚餐' }
+              { rowIndex: 2, checked: false, date: '2026/11/01', bank: '永豐', card: 'SPORT (8005)', item: '超商消費', channel: 'Apple Pay', amount: 120, status: '待撥款', transferDate: '', billCycle: '2026-11', purpose: '信用卡扣繳戶', note: '早餐' },
+              { rowIndex: 3, checked: true, date: '2026/10/30', bank: '玉山', card: 'UBear (9065)', item: '網路購物', channel: '網路購物', amount: 3500, status: '待撥款', transferDate: '', billCycle: '2026-10', purpose: '固定開銷', note: '日用品補貨' },
+              { rowIndex: 4, checked: true, date: '2026/10/25', bank: '台新', card: '＠GOGO (7803)', item: '外食餐飲', channel: 'LINE Pay', amount: 880, status: '已撥款', transferDate: '2026/10/27', billCycle: '2026-10', purpose: '日常開銷', note: '聚餐' }
             ]
           }, isRefresh);
         }, 500);
@@ -2064,8 +2271,9 @@
         return;
       }
 
-      creditTransactions = response.data || [];
-      creditPendingAmount = Number(response.pendingAmount) || 0;
+      creditTransactions = response.data || response.transactions || [];
+      creditPendingAmount = Number(response.pendingAmount || response.totalPending) || 0;
+      creditPendingByPurpose = response.pendingByPurpose || {};
       isCreditHistoryLoaded = true;
 
       // 更新待撥款總額與待撥筆數
@@ -2079,8 +2287,20 @@
         pendingCountElem.textContent = `${pendingCount} 筆待撥`;
       }
 
+      // 清理已無效的勾選列
+      const validPendingRows = new Set(
+        creditTransactions.filter(t => t.status === '待撥款').map(t => t.rowIndex)
+      );
+      for (const r of selectedCreditRows.keys()) {
+        if (!validPendingRows.has(r)) {
+          selectedCreditRows.delete(r);
+        }
+      }
+
+      renderPurposeChips();
       populateCcFilterBanks();
       renderCreditCardTransactions();
+      updateBatchBar();
 
       if (isRefresh) {
         showToast('信用卡明細已同步最新狀態！', 'success');
@@ -2097,6 +2317,37 @@
       if (listContainer) listContainer.classList.remove('hidden');
 
       showToast('載入失敗: ' + (error.message || error), 'error');
+    }
+
+    function renderPurposeChips() {
+      const container = document.getElementById('cc-purpose-chips');
+      if (!container) return;
+
+      const entries = Object.entries(creditPendingByPurpose);
+      if (entries.length === 0) {
+        container.innerHTML = '<span class="purpose-chip-empty">目前全數已撥款，無待撥名目</span>';
+        return;
+      }
+
+      container.innerHTML = entries.map(([purpose, amt]) => {
+        const isActive = filterPurpose === purpose;
+        return `
+          <div class="purpose-chip ${isActive ? 'active' : ''}" onclick="togglePurposeFilter('${escapeHtml(purpose)}')">
+            <span>📌 ${escapeHtml(purpose)}</span>
+            <span class="purpose-chip-amount">${formatCurrency(amt)}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function togglePurposeFilter(purpose) {
+      if (filterPurpose === purpose) {
+        filterPurpose = '';
+      } else {
+        filterPurpose = purpose;
+      }
+      renderPurposeChips();
+      renderCreditCardTransactions();
     }
 
     function populateCcFilterBanks() {
@@ -2123,22 +2374,34 @@
       if (filterBank) {
         list = list.filter(t => t.bank === filterBank);
       }
+      if (filterPurpose) {
+        list = list.filter(t => (t.purpose || '未指定名目') === filterPurpose);
+      }
 
       if (list.length === 0) {
-        container.innerHTML = '<div class="empty-state">尚無符合條件的信用卡消費明細</div>';
+        const emptyMsg = filterPurpose
+          ? `名目「${filterPurpose}」目前無符合條件的明細`
+          : '尚無符合條件的信用卡消費明細';
+        container.innerHTML = `<div class="empty-state">${escapeHtml(emptyMsg)}</div>`;
         return;
       }
 
       container.innerHTML = list.map(tx => {
         const isPending = tx.status === '待撥款';
+        const isSelected = selectedCreditRows.has(tx.rowIndex);
         const statusClass = isPending ? 'pending' : 'transferred';
         const formattedAmount = `$ ${Number(tx.amount || 0).toLocaleString('zh-TW')}`;
         const checkTag = tx.checked ? '<span class="status-badge checked">✔ 已核對</span>' : '';
 
+        const checkboxHtml = isPending
+          ? `<input type="checkbox" class="tx-checkbox" data-row="${tx.rowIndex}" ${isSelected ? 'checked' : ''} onchange="toggleTxSelect(${tx.rowIndex}, ${tx.amount}, this.checked)">`
+          : '';
+
         return `
-          <div class="tx-card ${isPending ? '' : 'transferred-row'}">
+          <div class="tx-card ${isPending ? '' : 'transferred-row'} ${isSelected ? 'selected-card' : ''}" id="tx-card-${tx.rowIndex}">
             <div class="tx-card-header">
               <div class="tx-date-badge">
+                ${checkboxHtml}
                 <span>📅 ${tx.date || '---'}</span>
                 <span class="status-badge ${statusClass}">${tx.status}</span>
                 ${checkTag}
@@ -2161,6 +2424,100 @@
           </div>
         `;
       }).join('');
+    }
+
+    function toggleTxSelect(rowIndex, amount, isChecked) {
+      if (isChecked) {
+        selectedCreditRows.set(rowIndex, Number(amount) || 0);
+      } else {
+        selectedCreditRows.delete(rowIndex);
+      }
+      const card = document.getElementById(`tx-card-${rowIndex}`);
+      if (card) {
+        card.classList.toggle('selected-card', isChecked);
+      }
+      updateBatchBar();
+    }
+
+    function updateBatchBar() {
+      const bar = document.getElementById('cc-batch-bar');
+      const countElem = document.getElementById('batch-selected-count');
+      const totalElem = document.getElementById('batch-selected-total');
+      if (!bar) return;
+
+      const count = selectedCreditRows.size;
+      if (count > 0 && currentNavTab === 'history' && historySubTab === 'credit') {
+        const total = Array.from(selectedCreditRows.values()).reduce((a, b) => a + b, 0);
+        if (countElem) countElem.textContent = count;
+        if (totalElem) totalElem.textContent = formatCurrency(total);
+        bar.classList.remove('hidden');
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function executeBatchTransfer() {
+      if (selectedCreditRows.size === 0) return;
+
+      const rowIndices = Array.from(selectedCreditRows.keys());
+      const btn = document.getElementById('btn-batch-transfer');
+      const btnText = document.getElementById('batch-btn-text');
+      const btnSpinner = document.getElementById('batch-btn-spinner');
+
+      btn.disabled = true;
+      if (btnText) btnText.textContent = '撥款中...';
+      if (btnSpinner) btnSpinner.classList.remove('hidden');
+
+      const today = new Date().toISOString().split('T')[0];
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(onBatchTransferSuccess)
+          .withFailureHandler(onBatchTransferFailed)
+          .batchUpdateCreditCardTransfer(rowIndices, today);
+      } else {
+        setTimeout(() => {
+          onBatchTransferSuccess({
+            success: true,
+            updatedCount: rowIndices.length,
+            message: `（模擬）已成功將 ${rowIndices.length} 筆消費標記為已撥款！`
+          });
+        }, 800);
+      }
+    }
+
+    function onBatchTransferSuccess(response) {
+      const btn = document.getElementById('btn-batch-transfer');
+      const btnText = document.getElementById('batch-btn-text');
+      const btnSpinner = document.getElementById('batch-btn-spinner');
+
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = '標記為已撥款';
+      if (btnSpinner) btnSpinner.classList.add('hidden');
+
+      if (response && response.success) {
+        showToast(response.message || '已成功標記為已撥款！', 'success');
+        selectedCreditRows.clear();
+        updateBatchBar();
+        // 自動刷新明細與名目看板
+        loadCreditCardTransactions(true);
+        // 也重新整理帳戶餘額
+        loadAccountOptions();
+      } else {
+        showToast(response ? response.error : '批次撥款失敗', 'error');
+      }
+    }
+
+    function onBatchTransferFailed(error) {
+      const btn = document.getElementById('btn-batch-transfer');
+      const btnText = document.getElementById('batch-btn-text');
+      const btnSpinner = document.getElementById('batch-btn-spinner');
+
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = '標記為已撥款';
+      if (btnSpinner) btnSpinner.classList.add('hidden');
+
+      showToast('撥款失敗: ' + (error.message || error), 'error');
     }
 
     // HTML 跳脫字元防護
