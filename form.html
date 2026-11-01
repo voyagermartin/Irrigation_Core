@@ -742,7 +742,7 @@
         <div class="mode-tabs">
           <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
           <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
-          <button type="button" class="tab-btn" id="tab-credit" onclick="switchMode('credit')">信用卡刷卡</button>
+          <button type="button" class="tab-btn" id="tab-credit" onclick="switchMode('credit')">刷卡</button>
           <button type="button" class="tab-btn" id="tab-balance" onclick="switchMode('balance')">餘額查詢</button>
         </div>
 
@@ -895,29 +895,19 @@
 
           <div class="form-group">
             <label class="form-label" for="cc-item">消費項目</label>
-            <input type="text" id="cc-item" class="input-field" list="common-items" placeholder="輸入或選擇消費項目" autocomplete="off">
-            <datalist id="common-items">
-              <option value="悠遊卡加值"></option>
-              <option value="台鐵票"></option>
-              <option value="高鐵票"></option>
-              <option value="超商消費"></option>
-              <option value="外食餐飲"></option>
-              <option value="日常用品"></option>
-              <option value="生鮮超市"></option>
-              <option value="加油"></option>
-              <option value="訂閱服務"></option>
-            </datalist>
-            <div class="quick-chips">
-              <button type="button" class="chip-btn" onclick="selectCommonItem('悠遊卡加值')">悠遊卡加值</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('台鐵票')">台鐵票</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('高鐵票')">高鐵票</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('超商消費')">超商消費</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('外食餐飲')">外食餐飲</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('日常用品')">日常用品</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('生鮮超市')">生鮮超市</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('加油')">加油</button>
-              <button type="button" class="chip-btn" onclick="selectCommonItem('訂閱服務')">訂閱服務</button>
-            </div>
+            <select id="cc-item" class="select-field">
+              <option value="">請選擇消費項目</option>
+              <option value="悠遊卡加值">悠遊卡加值</option>
+              <option value="台鐵票">台鐵票</option>
+              <option value="高鐵票">高鐵票</option>
+              <option value="超商消費">超商消費</option>
+              <option value="外食餐飲">外食餐飲</option>
+              <option value="日常用品">日常用品</option>
+              <option value="生鮮超市">生鮮超市</option>
+              <option value="加油">加油</option>
+              <option value="訂閱服務">訂閱服務</option>
+              <option value="其他">其他</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -1234,14 +1224,6 @@
       // 若該銀行只有一張卡片，自動代入
       if (filteredCards.length === 1) {
         cardElem.value = filteredCards[0].fullName;
-      }
-    }
-
-    function selectCommonItem(itemName) {
-      const itemElem = document.getElementById('cc-item');
-      if (itemElem) {
-        itemElem.value = itemName;
-        itemElem.focus();
       }
     }
 
@@ -1583,7 +1565,7 @@
           return;
         }
         if (!ccItem) {
-          showToast('請輸入或選擇消費項目', 'error');
+          showToast('請選擇消費項目', 'error');
           return;
         }
         if (!amount || Number(amount) <= 0) {
@@ -1613,7 +1595,7 @@
           setTimeout(() => {
             onRecordCreditSuccess({
               success: true,
-              message: `（模擬）信用卡刷卡紀錄已成功寫入！金額：$${amount}（${ccCard} - ${ccItem}）`
+              message: `（模擬）刷卡紀錄已成功寫入！金額：$${amount}（${ccCard} - ${ccItem}）`
             });
           }, 1000);
         }
@@ -1666,7 +1648,7 @@
     function onRecordCreditSuccess(response) {
       setSubmittingState(false);
       if (response && response.success) {
-        showToast(response.message || '信用卡刷卡紀錄已成功寫入！', 'success');
+        showToast(response.message || '刷卡紀錄已成功寫入！', 'success');
         document.getElementById('tx-amount').value = '';
         document.getElementById('tx-desc').value = '';
         document.getElementById('cc-item').value = '';

@@ -259,7 +259,7 @@ function recordCreditCardTransaction(payload) {
     if (!date) throw new Error('請選擇消費日期');
     if (!bank) throw new Error('請選擇發卡銀行');
     if (!card) throw new Error('請選擇卡片');
-    if (!item) throw new Error('請輸入消費項目');
+    if (!item) throw new Error('請選擇消費項目');
     if (!channel) throw new Error('請選擇支付通道');
     if (isNaN(amount) || amount <= 0) throw new Error('請輸入有效的消費金額（需大於 0）');
 
@@ -318,13 +318,13 @@ function recordCreditCardTransaction(payload) {
 
     return {
       success: true,
-      message: `信用卡刷卡紀錄已成功寫入！金額：$${amount.toLocaleString()}（${card} - ${item}）`
+      message: `刷卡紀錄已成功寫入！金額：$${amount.toLocaleString()}（${card} - ${item}）`
     };
   } catch (error) {
     Logger.log('recordCreditCardTransaction 失敗: ' + error.message);
     return {
       success: false,
-      error: error.message || '信用卡刷卡紀錄寫入失敗'
+      error: error.message || '刷卡紀錄寫入失敗'
     };
   }
 }
