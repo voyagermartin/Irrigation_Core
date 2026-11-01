@@ -73,10 +73,46 @@ function getAccountOptions() {
       }
     });
 
+    // 讀取「8. 信用卡卡片主檔」，提取有效卡片清單（發卡銀行、卡片暱稱、末四碼、卡片辨識全名）
+    const cardSheet = ss.getSheetByName(SHEET_NAMES.CC_CARDS);
+    const creditCards = [];
+    if (cardSheet) {
+      const cardLastRow = cardSheet.getLastRow();
+      if (cardLastRow >= 2) {
+        const cardValues = cardSheet.getRange(2, 1, cardLastRow - 1, 10).getValues();
+        cardValues.forEach(r => {
+          const bank = String(r[0] || '').trim();
+          const nick = String(r[1] || '').trim();
+          const last4 = String(r[2] || '').trim();
+          const fullName = String(r[3] || '').trim();
+          const status = String(r[8] || '').trim();
+
+          if (bank && status !== '已停用') {
+            const displayName = fullName || (nick ? `${nick}${last4 ? ` (${last4})` : ''}` : bank);
+            creditCards.push({
+              bank: bank,
+              nick: nick,
+              last4: last4,
+              fullName: displayName
+            });
+          }
+        });
+      }
+    }
+
+    // 提煉不重複的名目用途清單供信用卡扣款名目使用
+    const purposeSet = new Set();
+    optionsMap.forEach(item => {
+      if (item.purpose) purposeSet.add(item.purpose);
+    });
+    const deductPurposes = Array.from(purposeSet);
+
     return {
       success: true,
       data: optionsMap,
-      totalNetWorth: totalNetWorth
+      totalNetWorth: totalNetWorth,
+      creditCards: creditCards,
+      deductPurposes: deductPurposes
     };
   } catch (error) {
     return {
@@ -190,6 +226,105 @@ function recordTransaction(payload) {
     return {
       success: false,
       error: error.message || '寫入交易資料失敗'
+    };
+  }
+}
+
+/**
+ * 寫入信用卡刷卡交易紀錄至「7. 信用卡消費明細」
+ * @param {Object} payload 信用卡交易資料
+ * @returns {Object} 執行結果
+ */
+function recordCreditCardTransaction(payload) {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!sheet) {
+      throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+    }
+
+    if (!payload) {
+      throw new Error('未提供交易資料');
+    }
+
+    const date = payload.date; // YYYY/MM/DD or YYYY-MM-DD
+    const bank = String(payload.bank || '').trim();
+    const card = String(payload.card || '').trim();
+    const item = String(payload.item || '').trim();
+    const channel = String(payload.channel || '').trim();
+    const amount = parseFloat(payload.amount);
+    const purpose = String(payload.purpose || '').trim();
+    const note = String(payload.note || '').trim();
+
+    if (!date) throw new Error('請選擇消費日期');
+    if (!bank) throw new Error('請選擇發卡銀行');
+    if (!card) throw new Error('請選擇卡片');
+    if (!item) throw new Error('請輸入消費項目');
+    if (!channel) throw new Error('請選擇支付通道');
+    if (isNaN(amount) || amount <= 0) throw new Error('請輸入有效的消費金額（需大於 0）');
+
+    // 格式化日期為 YYYY/MM/DD
+    const formattedDate = date.replace(/-/g, '/');
+
+    // 計算帳單週期 (若有傳入則使用，否則依據消費日期預設為 YYYY-MM)
+    const billCycle = payload.billCycle || formattedDate.substring(0, 7).replace('/', '-');
+
+    // 取得寫入位置（新的一列）
+    const lastRow = sheet.getLastRow();
+    const targetRow = Math.max(lastRow + 1, 2);
+
+    // 12 欄結構定義：
+    // A: 帳單核對 (FALSE)
+    // B: 消費日期
+    // C: 發卡銀行
+    // D: 卡片
+    // E: 消費項目
+    // F: 支付通道
+    // G: 消費金額
+    // H: 撥款狀態 ('待撥款')
+    // I: 撥款調度日期 ('')
+    // J: 帳單週期 (billCycle)
+    // K: 對應扣款名目 (purpose)
+    // L: 備註 (note)
+    const rowData = [
+      false,         // A: 帳單核對
+      formattedDate, // B: 消費日期
+      bank,          // C: 發卡銀行
+      card,          // D: 卡片
+      item,          // E: 消費項目
+      channel,       // F: 支付通道
+      amount,        // G: 消費金額
+      '待撥款',      // H: 撥款狀態
+      '',            // I: 撥款調度日期
+      billCycle,     // J: 帳單週期
+      purpose,       // K: 對應扣款名目
+      note           // L: 備註
+    ];
+
+    sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+
+    // 確保 A 欄配置原生 Checkbox 資料驗證
+    const checkboxRule = SpreadsheetApp.newDataValidation()
+      .requireCheckbox()
+      .build();
+    sheet.getRange(targetRow, 1).setDataValidation(checkboxRule).setHorizontalAlignment('center');
+
+    // 確保 B 欄日期與 G 欄金額格式
+    sheet.getRange(targetRow, 2).setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+    sheet.getRange(targetRow, 7).setNumberFormat('#,##0');
+    sheet.getRange(targetRow, 8).setHorizontalAlignment('center');
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      message: `信用卡刷卡紀錄已成功寫入！金額：$${amount.toLocaleString()}（${card} - ${item}）`
+    };
+  } catch (error) {
+    Logger.log('recordCreditCardTransaction 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '信用卡刷卡紀錄寫入失敗'
     };
   }
 }

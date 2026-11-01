@@ -105,25 +105,55 @@
       padding: 4px;
       margin-bottom: 20px;
       border: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 3px;
     }
 
     .tab-btn {
       flex: 1;
-      padding: 10px;
+      padding: 9px 3px;
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 600;
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.25s ease;
+      text-align: center;
+      white-space: nowrap;
     }
 
     .tab-btn.active {
       background: var(--accent-primary);
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    /* Quick Chips for Common Items */
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chip-btn {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 0.775rem;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .chip-btn:hover, .chip-btn:active {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: var(--accent-primary);
+      color: #e0e7ff;
     }
 
     /* Form Fields */
@@ -712,6 +742,7 @@
         <div class="mode-tabs">
           <button type="button" class="tab-btn active" id="tab-single" onclick="switchMode('single')">單筆記帳</button>
           <button type="button" class="tab-btn" id="tab-transfer" onclick="switchMode('transfer')">資金平移</button>
+          <button type="button" class="tab-btn" id="tab-credit" onclick="switchMode('credit')">信用卡刷卡</button>
           <button type="button" class="tab-btn" id="tab-balance" onclick="switchMode('balance')">餘額查詢</button>
         </div>
 
@@ -835,6 +866,68 @@
           </div>
         </div>
 
+        <!-- ================= 信用卡刷卡 模式表單 ================= -->
+        <div id="credit-mode-fields" class="hidden">
+          <div class="form-group">
+            <label class="form-label">選擇卡片 (發卡銀行 / 卡片)</label>
+            <div class="select-grid">
+              <select id="cc-bank" class="select-field" onchange="onCcBankChange()">
+                <option value="">選擇發卡銀行</option>
+              </select>
+              <select id="cc-card" class="select-field" disabled>
+                <option value="">選擇卡片</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cc-channel">支付通道</label>
+            <select id="cc-channel" class="select-field">
+              <option value="實體刷卡">實體刷卡</option>
+              <option value="LINE Pay">LINE Pay</option>
+              <option value="街口支付">街口支付</option>
+              <option value="Apple Pay">Apple Pay</option>
+              <option value="悠遊卡/一卡通">悠遊卡/一卡通</option>
+              <option value="網路購物">網路購物</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cc-item">消費項目</label>
+            <input type="text" id="cc-item" class="input-field" list="common-items" placeholder="輸入或選擇消費項目" autocomplete="off">
+            <datalist id="common-items">
+              <option value="悠遊卡加值"></option>
+              <option value="台鐵票"></option>
+              <option value="高鐵票"></option>
+              <option value="超商消費"></option>
+              <option value="外食餐飲"></option>
+              <option value="日常用品"></option>
+              <option value="生鮮超市"></option>
+              <option value="加油"></option>
+              <option value="訂閱服務"></option>
+            </datalist>
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" onclick="selectCommonItem('悠遊卡加值')">悠遊卡加值</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('台鐵票')">台鐵票</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('高鐵票')">高鐵票</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('超商消費')">超商消費</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('外食餐飲')">外食餐飲</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('日常用品')">日常用品</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('生鮮超市')">生鮮超市</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('加油')">加油</button>
+              <button type="button" class="chip-btn" onclick="selectCommonItem('訂閱服務')">訂閱服務</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cc-purpose">對應扣款名目 (選填)</label>
+            <select id="cc-purpose" class="select-field">
+              <option value="">預設扣款戶 / 依卡片設定</option>
+            </select>
+          </div>
+        </div>
+
         <!-- 金額 -->
         <div class="form-group" id="tx-amount-group">
           <label class="form-label" for="tx-amount">交易金額</label>
@@ -846,7 +939,7 @@
 
         <!-- 項目說明 -->
         <div class="form-group" id="tx-desc-group">
-          <label class="form-label" for="tx-desc">交易項目說明 (選填)</label>
+          <label class="form-label" for="tx-desc" id="tx-desc-label">交易項目說明 (選填)</label>
           <input type="text" id="tx-desc" class="input-field" placeholder="例如：7月利息 / 儲蓄提撥">
         </div>
 
@@ -908,9 +1001,11 @@
   <script>
     // 全域狀態
     let currentNavTab = 'record'; // 'record' | 'history'
-    let currentMode = 'single'; // 'single' | 'transfer' | 'balance'
+    let currentMode = 'single'; // 'single' | 'transfer' | 'credit' | 'balance'
     let currentType = 'expense'; // 'expense' | 'income'
     let accountRawData = [];
+    let creditCardOptions = [];
+    let deductPurposes = [];
     let totalNetWorth = 0;
     let recentTransactions = [];
     let isHistoryLoaded = false;
@@ -954,17 +1049,22 @@
       return isNeg ? `-$ ${absFormatted}` : `$ ${absFormatted}`;
     }
 
-    // 切換模式 (單筆 / 資金平移 / 餘額查詢)
+    // 切換模式 (單筆 / 資金平移 / 信用卡刷卡 / 餘額查詢)
     function switchMode(mode) {
       currentMode = mode;
       document.getElementById('tab-single').classList.toggle('active', mode === 'single');
       document.getElementById('tab-transfer').classList.toggle('active', mode === 'transfer');
+      document.getElementById('tab-credit').classList.toggle('active', mode === 'credit');
       document.getElementById('tab-balance').classList.toggle('active', mode === 'balance');
 
       const singleFields = document.getElementById('single-mode-fields');
       const transferFields = document.getElementById('transfer-mode-fields');
+      const creditFields = document.getElementById('credit-mode-fields');
       const balanceFields = document.getElementById('balance-mode-fields');
       const txForm = document.getElementById('tx-form');
+      const btnText = document.getElementById('btn-text');
+      const descLabel = document.getElementById('tx-desc-label');
+      const descInput = document.getElementById('tx-desc');
 
       if (mode === 'balance') {
         txForm.classList.add('hidden');
@@ -974,32 +1074,45 @@
         txForm.classList.remove('hidden');
         balanceFields.classList.add('hidden');
 
-        if (mode === 'single') {
-          singleFields.classList.remove('hidden');
-          transferFields.classList.add('hidden');
-          document.getElementById('single-bank').required = true;
-          document.getElementById('single-account').required = true;
-          document.getElementById('single-purpose').required = true;
+        singleFields.classList.toggle('hidden', mode !== 'single');
+        transferFields.classList.toggle('hidden', mode !== 'transfer');
+        creditFields.classList.toggle('hidden', mode !== 'credit');
 
-          document.getElementById('from-bank').required = false;
-          document.getElementById('from-account').required = false;
-          document.getElementById('from-purpose').required = false;
-          document.getElementById('to-bank').required = false;
-          document.getElementById('to-account').required = false;
-          document.getElementById('to-purpose').required = false;
-        } else {
-          singleFields.classList.add('hidden');
-          transferFields.classList.remove('hidden');
-          document.getElementById('single-bank').required = false;
-          document.getElementById('single-account').required = false;
-          document.getElementById('single-purpose').required = false;
+        // 單筆模式欄位驗證
+        const isSingle = mode === 'single';
+        document.getElementById('single-bank').required = isSingle;
+        document.getElementById('single-account').required = isSingle;
+        document.getElementById('single-purpose').required = isSingle;
 
-          document.getElementById('from-bank').required = true;
-          document.getElementById('from-account').required = true;
-          document.getElementById('from-purpose').required = true;
-          document.getElementById('to-bank').required = true;
-          document.getElementById('to-account').required = true;
-          document.getElementById('to-purpose').required = true;
+        // 平移模式欄位驗證
+        const isTransfer = mode === 'transfer';
+        document.getElementById('from-bank').required = isTransfer;
+        document.getElementById('from-account').required = isTransfer;
+        document.getElementById('from-purpose').required = isTransfer;
+        document.getElementById('to-bank').required = isTransfer;
+        document.getElementById('to-account').required = isTransfer;
+        document.getElementById('to-purpose').required = isTransfer;
+
+        // 信用卡模式欄位驗證
+        const isCredit = mode === 'credit';
+        document.getElementById('cc-bank').required = isCredit;
+        document.getElementById('cc-card').required = isCredit;
+        document.getElementById('cc-channel').required = isCredit;
+        document.getElementById('cc-item').required = isCredit;
+
+        // 動態切換按鈕文字與描述標籤
+        if (isSingle) {
+          btnText.textContent = '確認寫入交易';
+          if (descLabel) descLabel.textContent = '交易項目說明 (選填)';
+          if (descInput) descInput.placeholder = '例如：7月利息 / 儲蓄提撥';
+        } else if (isTransfer) {
+          btnText.textContent = '確認執行平移';
+          if (descLabel) descLabel.textContent = '平移原因說明 (選填)';
+          if (descInput) descInput.placeholder = '例如：ATM提款轉存 / 活存轉投資';
+        } else if (isCredit) {
+          btnText.textContent = '確認寫入刷卡紀錄';
+          if (descLabel) descLabel.textContent = '備註說明 (選填)';
+          if (descInput) descInput.placeholder = '例如：分期付款 / 優惠代碼 / 報帳用';
         }
       }
     }
@@ -1034,6 +1147,8 @@
       }
 
       accountRawData = response.data || [];
+      creditCardOptions = response.creditCards || [];
+      deductPurposes = response.deductPurposes || [];
       totalNetWorth = response.totalNetWorth || 0;
 
       const totalElem = document.getElementById('total-net-worth');
@@ -1042,6 +1157,7 @@
       }
 
       populateBankSelects();
+      populateCreditCardSelects();
       populateFilterSelects();
       populateTxFilterSelects();
       renderBalanceList();
@@ -1052,7 +1168,7 @@
       onToPurposeChange();
 
       if (isRefresh) {
-        showToast('餘額資料已同步最新計算！', 'success');
+        showToast('餘額與卡片資料已同步最新！', 'success');
       }
     }
 
@@ -1066,6 +1182,67 @@
       const refreshIcon = document.getElementById('refresh-icon');
       if (refreshIcon) refreshIcon.style.animation = 'spin 0.8s linear infinite';
       loadAccountOptions(true);
+    }
+
+    // 填充信用卡卡片選單與扣款名目選單
+    function populateCreditCardSelects() {
+      const ccBankElem = document.getElementById('cc-bank');
+      const ccPurposeElem = document.getElementById('cc-purpose');
+      if (!ccBankElem) return;
+
+      const ccBanks = [...new Set(creditCardOptions.map(c => c.bank))];
+      ccBankElem.innerHTML = '<option value="">請選擇發卡銀行</option>' +
+        ccBanks.map(b => `<option value="${b}">${b}</option>`).join('');
+
+      onCcBankChange();
+
+      if (ccPurposeElem) {
+        let purposeHtml = '<option value="">預設扣款戶 / 依卡片設定</option>';
+        if (deductPurposes.length > 0) {
+          purposeHtml += deductPurposes.map(p => {
+            const isDefault = p === '信用卡扣繳戶' ? ' selected' : '';
+            return `<option value="${p}"${isDefault}>${p}</option>`;
+          }).join('');
+        }
+        ccPurposeElem.innerHTML = purposeHtml;
+      }
+    }
+
+    function onCcBankChange() {
+      const bankElem = document.getElementById('cc-bank');
+      const cardElem = document.getElementById('cc-card');
+      if (!bankElem || !cardElem) return;
+
+      const selectedBank = bankElem.value;
+      if (!selectedBank) {
+        cardElem.innerHTML = '<option value="">請先選擇發卡銀行</option>';
+        cardElem.disabled = true;
+        return;
+      }
+
+      const filteredCards = creditCardOptions.filter(c => c.bank === selectedBank);
+      if (filteredCards.length === 0) {
+        cardElem.innerHTML = '<option value="">該銀行尚無有效卡片</option>';
+        cardElem.disabled = true;
+        return;
+      }
+
+      cardElem.innerHTML = '<option value="">請選擇卡片</option>' +
+        filteredCards.map(c => `<option value="${c.fullName}">${c.fullName}</option>`).join('');
+      cardElem.disabled = false;
+
+      // 若該銀行只有一張卡片，自動代入
+      if (filteredCards.length === 1) {
+        cardElem.value = filteredCards[0].fullName;
+      }
+    }
+
+    function selectCommonItem(itemName) {
+      const itemElem = document.getElementById('cc-item');
+      if (itemElem) {
+        itemElem.value = itemName;
+        itemElem.focus();
+      }
     }
 
     // 填充記帳銀行選單
@@ -1389,6 +1566,61 @@
       const amount = document.getElementById('tx-amount').value;
       const description = document.getElementById('tx-desc').value.trim();
 
+      // ================= 信用卡模式 =================
+      if (currentMode === 'credit') {
+        const ccBank = document.getElementById('cc-bank').value;
+        const ccCard = document.getElementById('cc-card').value;
+        const ccChannel = document.getElementById('cc-channel').value;
+        const ccItem = document.getElementById('cc-item').value.trim();
+        const ccPurpose = document.getElementById('cc-purpose').value;
+
+        if (!ccBank) {
+          showToast('請選擇發卡銀行', 'error');
+          return;
+        }
+        if (!ccCard) {
+          showToast('請選擇卡片', 'error');
+          return;
+        }
+        if (!ccItem) {
+          showToast('請輸入或選擇消費項目', 'error');
+          return;
+        }
+        if (!amount || Number(amount) <= 0) {
+          showToast('請輸入大於 0 的有效金額', 'error');
+          return;
+        }
+
+        const payload = {
+          date: date,
+          bank: ccBank,
+          card: ccCard,
+          item: ccItem,
+          channel: ccChannel,
+          amount: amount,
+          purpose: ccPurpose,
+          note: description
+        };
+
+        setSubmittingState(true);
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(onRecordCreditSuccess)
+            .withFailureHandler(onRecordFailed)
+            .recordCreditCardTransaction(payload);
+        } else {
+          setTimeout(() => {
+            onRecordCreditSuccess({
+              success: true,
+              message: `（模擬）信用卡刷卡紀錄已成功寫入！金額：$${amount}（${ccCard} - ${ccItem}）`
+            });
+          }, 1000);
+        }
+        return;
+      }
+
+      // ================= 單筆記帳 / 資金平移模式 =================
       let payload = {
         mode: currentMode,
         date: date,
@@ -1428,6 +1660,18 @@
         setTimeout(() => {
           onRecordSuccess({ success: true, message: '（模擬）交易已成功寫入！' });
         }, 1000);
+      }
+    }
+
+    function onRecordCreditSuccess(response) {
+      setSubmittingState(false);
+      if (response && response.success) {
+        showToast(response.message || '信用卡刷卡紀錄已成功寫入！', 'success');
+        document.getElementById('tx-amount').value = '';
+        document.getElementById('tx-desc').value = '';
+        document.getElementById('cc-item').value = '';
+      } else {
+        showToast(response ? response.error : '寫入失敗', 'error');
       }
     }
 
@@ -1603,7 +1847,13 @@
         btnText.textContent = '處理中...';
         btnSpinner.classList.remove('hidden');
       } else {
-        btnText.textContent = '確認寫入交易';
+        if (currentMode === 'credit') {
+          btnText.textContent = '確認寫入刷卡紀錄';
+        } else if (currentMode === 'transfer') {
+          btnText.textContent = '確認執行平移';
+        } else {
+          btnText.textContent = '確認寫入交易';
+        }
         btnSpinner.classList.add('hidden');
       }
     }
