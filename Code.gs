@@ -302,7 +302,11 @@ function recordCreditCardTransaction(payload) {
     const item = String(payload.item || '').trim();
     const channel = String(payload.channel || '').trim();
     const amount = parseFloat(payload.amount);
-    const purpose = String(payload.purpose || '').trim();
+    let purpose = String(payload.purpose || '').trim();
+    // 信用卡消費為實質支出，若為空或為「信用卡扣繳戶」，預設校正為「日常開銷」
+    if (!purpose || purpose === '信用卡扣繳戶') {
+      purpose = '日常開銷';
+    }
     const note = String(payload.note || '').trim();
 
     if (!date) throw new Error('請選擇消費日期');
@@ -554,7 +558,9 @@ function getCreditCardTransactions(limit, statusFilter) {
       const status = String(row[7] || '').trim() || '待撥款';
       const transferDate = row[8] instanceof Date ? formatDate(row[8]) : String(row[8] || '').trim();
       const billCycle = String(row[9] || '').trim();
-      const purpose = String(row[10] || '').trim() || '信用卡扣繳戶';
+      const rawPurpose = String(row[10] || '').trim();
+      // 信用卡消費為實質支出，若為空或誤記為「信用卡扣繳戶」，自動校正為「日常開銷」
+      const purpose = (!rawPurpose || rawPurpose === '信用卡扣繳戶') ? '日常開銷' : rawPurpose;
       const note = String(row[11] || '').trim();
 
       // 累計待撥款總額與各名目待撥統計
@@ -1666,6 +1672,11 @@ function fixCreditCardRecordsRowPosition() {
 
       // 若有消費日期、發卡銀行或金額，視為有效交易紀錄
       if (date || bank || card || amount > 0) {
+        // 若扣款名目為空或誤記為「信用卡扣繳戶」，自動校正為「日常開銷」
+        const curPurpose = String(row[10] || '').trim();
+        if (!curPurpose || curPurpose === '信用卡扣繳戶') {
+          row[10] = '日常開銷';
+        }
         validRows.push(row);
         if (actualRowNumber > validRows.length + 1) {
           strayRowIndexes.push(actualRowNumber);
@@ -1680,14 +1691,7 @@ function fixCreditCardRecordsRowPosition() {
       };
     }
 
-    if (strayRowIndexes.length === 0) {
-      return {
-        success: true,
-        message: `分頁 7 目前共有 ${validRows.length} 筆資料，且已依序從第 2 列起排列正常。`
-      };
-    }
-
-    // 將所有有效資料依序重新寫入第 2 列起
+    // 將所有有效資料依序重新寫入第 2 列起（含自動校正之名目）
     sheet.getRange(2, 1, validRows.length, 12).setValues(validRows);
 
     // 清除原本被填寫在下方的落單列 (從 validRows.length + 2 列到 maxRows)

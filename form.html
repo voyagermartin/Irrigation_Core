@@ -1157,9 +1157,9 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="cc-purpose">對應扣款名目 (選填)</label>
+            <label class="form-label" for="cc-purpose">支出名目 (預算來源)</label>
             <select id="cc-purpose" class="select-field">
-              <option value="">預設扣款戶 / 依卡片設定</option>
+              <option value="日常開銷">日常開銷</option>
             </select>
           </div>
         </div>
@@ -1578,12 +1578,16 @@
       onCcBankChange();
 
       if (ccPurposeElem) {
-        let purposeHtml = '<option value="">預設扣款戶 / 依卡片設定</option>';
-        if (deductPurposes.length > 0) {
-          purposeHtml += deductPurposes.map(p => {
-            const isDefault = p === '信用卡扣繳戶' ? ' selected' : '';
+        // 信用卡消費為實質支出，排除實體扣繳轉帳帳戶標籤「信用卡扣繳戶」，優先預設為日常支出名目
+        const spendingPurposes = deductPurposes.filter(p => p !== '信用卡扣繳戶');
+        let purposeHtml = '';
+        if (spendingPurposes.length > 0) {
+          purposeHtml = spendingPurposes.map(p => {
+            const isDefault = p === '日常開銷' ? ' selected' : '';
             return `<option value="${p}"${isDefault}>${p}</option>`;
           }).join('');
+        } else {
+          purposeHtml = '<option value="日常開銷" selected>日常開銷</option>';
         }
         ccPurposeElem.innerHTML = purposeHtml;
       }
@@ -2244,11 +2248,11 @@
             totalPending: 3620,
             pendingAmount: 3620,
             pendingByPurpose: {
-              '信用卡扣繳戶': 120,
+              '日常開銷': 120,
               '固定開銷': 3500
             },
             data: [
-              { rowIndex: 2, checked: false, date: '2026/11/01', bank: '永豐', card: 'SPORT (8005)', item: '超商消費', channel: 'Apple Pay', amount: 120, status: '待撥款', transferDate: '', billCycle: '2026-11', purpose: '信用卡扣繳戶', note: '早餐' },
+              { rowIndex: 2, checked: false, date: '2026/11/01', bank: '永豐', card: 'SPORT (8005)', item: '超商消費', channel: 'Apple Pay', amount: 120, status: '待撥款', transferDate: '', billCycle: '2026-11', purpose: '日常開銷', note: '早餐' },
               { rowIndex: 3, checked: true, date: '2026/10/30', bank: '玉山', card: 'UBear (9065)', item: '網路購物', channel: '網路購物', amount: 3500, status: '待撥款', transferDate: '', billCycle: '2026-10', purpose: '固定開銷', note: '日用品補貨' },
               { rowIndex: 4, checked: true, date: '2026/10/25', bank: '台新', card: '＠GOGO (7803)', item: '外食餐飲', channel: 'LINE Pay', amount: 880, status: '已撥款', transferDate: '2026/10/27', billCycle: '2026-10', purpose: '日常開銷', note: '聚餐' }
             ]
@@ -2416,7 +2420,7 @@
               </div>
               <div class="tx-account-row" style="margin-top: 5px; font-size: 0.8rem; color: var(--text-secondary); gap: 8px;">
                 <span class="tag-channel">🏷️ ${escapeHtml(tx.channel)}</span>
-                <span class="tag-purpose">📌 ${escapeHtml(tx.purpose || '信用卡扣繳戶')}</span>
+                <span class="tag-purpose">📌 ${escapeHtml(tx.purpose || '日常開銷')}</span>
                 ${tx.transferDate ? `<span class="tag-transfer-date">📅 撥款日：${tx.transferDate}</span>` : ''}
               </div>
               ${tx.note ? `<div class="tx-desc-row" style="margin-top: 6px;">💬 ${escapeHtml(tx.note)}</div>` : ''}
