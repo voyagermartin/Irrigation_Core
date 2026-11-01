@@ -16,6 +16,16 @@ const SHEET_NAMES = {
  * HTTP GET 請求入口，渲染 Web App 主頁面
  */
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action) {
+    let result = {};
+    if (e.parameter.action === 'diagnose') {
+      result = diagnoseSystem();
+    } else if (e.parameter.action === 'fixSheet4') {
+      result = fixRecordSheetRowPosition();
+    }
+    return ContentService.createTextOutput(JSON.stringify(result, null, 2))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   return HtmlService.createHtmlOutputFromFile('form')
     .setTitle('Irrigation_Core 資金調度系統')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
@@ -190,6 +200,33 @@ function recordTransaction(payload) {
 
     const dateStr = payload.date || formatDate(new Date());
 
+    // 取得寫入起始位置：從第 2 列起往下搜尋第一個「交易日期與實體銀行皆為空」的真正空白列
+    // 杜絕因格式設定或開口驗證導致 getLastRow 誤判而跳寫至 500+ 列
+    function getNextEmptyRecordRow(s) {
+      let target = 2;
+      const last = s.getLastRow();
+      const rowsToCheck = Math.max(last, 2) - 1;
+
+      if (rowsToCheck > 0) {
+        const checkValues = s.getRange(2, 1, rowsToCheck, 2).getValues();
+        let foundEmpty = false;
+        for (let i = 0; i < checkValues.length; i++) {
+          const d = checkValues[i][0];
+          const b = checkValues[i][1];
+          if ((d === '' || d === null || d === undefined) &&
+              (b === '' || b === null || b === undefined)) {
+            target = i + 2;
+            foundEmpty = true;
+            break;
+          }
+        }
+        if (!foundEmpty) {
+          target = rowsToCheck + 2;
+        }
+      }
+      return target;
+    }
+
     if (payload.mode === 'single') {
       // 單筆記帳
       const { bank, account, purpose, type, amount, description } = payload;
@@ -206,7 +243,13 @@ function recordTransaction(payload) {
       const income = type === 'income' ? numAmount : '';
       const expense = type === 'expense' ? numAmount : '';
 
-      sheet.appendRow([
+      const targetRow = getNextEmptyRecordRow(sheet);
+      const maxRows = sheet.getMaxRows();
+      if (targetRow > maxRows) {
+        sheet.insertRowsAfter(maxRows, targetRow - maxRows);
+      }
+
+      const rowData = [
         dateStr,
         bank,
         account,
@@ -214,7 +257,20 @@ function recordTransaction(payload) {
         description || '',
         income,
         expense
-      ]);
+      ];
+
+      sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+
+      // 確保格式正確
+      sheet.getRange(targetRow, 1).setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+      if (income !== '') {
+        sheet.getRange(targetRow, 6).setNumberFormat('#,##0');
+      }
+      if (expense !== '') {
+        sheet.getRange(targetRow, 7).setNumberFormat('#,##0');
+      }
+
+      SpreadsheetApp.flush();
 
       return {
         success: true,
@@ -240,27 +296,40 @@ function recordTransaction(payload) {
 
       const baseDesc = description ? ` [${description}]` : '';
 
-      // 1. 轉出筆 (支)
-      sheet.appendRow([
-        dateStr,
-        fromBank,
-        fromAccount,
-        fromPurpose,
-        `資金平移 ➔ 轉出至 ${toBank}-${toAccount}(${toPurpose})${baseDesc}`,
-        '',
-        numAmount
-      ]);
+      const targetRow = getNextEmptyRecordRow(sheet);
+      const maxRows = sheet.getMaxRows();
+      if (targetRow + 1 > maxRows) {
+        sheet.insertRowsAfter(maxRows, (targetRow + 1) - maxRows);
+      }
 
-      // 2. 轉入筆 (收)
-      sheet.appendRow([
-        dateStr,
-        toBank,
-        toAccount,
-        toPurpose,
-        `資金平移 ⬅ 來自 ${fromBank}-${fromAccount}(${fromPurpose})${baseDesc}`,
-        numAmount,
-        ''
-      ]);
+      const rowsData = [
+        [
+          dateStr,
+          fromBank,
+          fromAccount,
+          fromPurpose,
+          `資金平移 ➔ 轉出至 ${toBank}-${toAccount}(${toPurpose})${baseDesc}`,
+          '',
+          numAmount
+        ],
+        [
+          dateStr,
+          toBank,
+          toAccount,
+          toPurpose,
+          `資金平移 ⬅ 來自 ${fromBank}-${fromAccount}(${fromPurpose})${baseDesc}`,
+          numAmount,
+          ''
+        ]
+      ];
+
+      sheet.getRange(targetRow, 1, 2, 7).setValues(rowsData);
+
+      sheet.getRange(targetRow, 1, 2, 1).setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+      sheet.getRange(targetRow, 7).setNumberFormat('#,##0');
+      sheet.getRange(targetRow + 1, 6).setNumberFormat('#,##0');
+
+      SpreadsheetApp.flush();
 
       return {
         success: true,
@@ -272,6 +341,7 @@ function recordTransaction(payload) {
     }
 
   } catch (error) {
+    Logger.log('recordTransaction 失敗: ' + error.message);
     return {
       success: false,
       error: error.message || '寫入交易資料失敗'
@@ -479,6 +549,11 @@ function getRecentTransactions(limit) {
           type = 'expense';
           amount = expVal;
         }
+      }
+
+      // 略過真正全空白列，避免下方落單空白列干擾
+      if (!formattedDate && !bank && amount === 0) {
+        continue;
       }
 
       transactions.push({
@@ -1717,12 +1792,185 @@ function fixCreditCardRecordsRowPosition() {
   }
 }
 
+/**
+ * 系統診斷函式：檢測分頁 4、5、7 的實際資料列數、第一空白列、落單紀錄及資料驗證狀態
+ */
+function diagnoseSystem() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
 
+    const s4 = ss.getSheetByName(SHEET_NAMES.RECORD);
+    const s5 = ss.getSheetByName(SHEET_NAMES.ASSET);
+    const s7 = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
 
+    const report = {
+      timestamp: new Date().toISOString(),
+      sheet4: {},
+      sheet5: {},
+      sheet7: {}
+    };
 
+    if (s4) {
+      const lastRow = s4.getLastRow();
+      const maxRows = s4.getMaxRows();
+      report.sheet4.lastRow = lastRow;
+      report.sheet4.maxRows = maxRows;
 
+      let firstEmptyRow = 2;
+      let validCount = 0;
+      const strayRows = [];
+      const checkRange = Math.max(lastRow, 2) - 1;
 
+      if (rowsToCheck = checkRange > 0) {
+        const vals = s4.getRange(2, 1, checkRange, 7).getValues();
+        let foundEmpty = false;
+        for (let i = 0; i < vals.length; i++) {
+          const row = vals[i];
+          const rowNum = i + 2;
+          const hasDate = row[0] !== '' && row[0] !== null;
+          const hasBank = String(row[1] || '').trim() !== '';
+          const hasAmount = (row[5] !== '' && row[5] !== null && Number(row[5]) > 0) ||
+                            (row[6] !== '' && row[6] !== null && Number(row[6]) > 0);
 
+          if (hasDate || hasBank || hasAmount) {
+            validCount++;
+            if (foundEmpty) {
+              strayRows.push({ row: rowNum, data: row });
+            }
+          } else {
+            if (!foundEmpty) {
+              firstEmptyRow = rowNum;
+              foundEmpty = true;
+            }
+          }
+        }
+        if (!foundEmpty) {
+          firstEmptyRow = checkRange + 2;
+        }
+      }
 
+      report.sheet4.firstEmptyRow = firstEmptyRow;
+      report.sheet4.validCount = validCount;
+      report.sheet4.strayRowsCount = strayRows.length;
+      report.sheet4.strayRowsPreview = strayRows.slice(0, 10);
 
+      if (lastRow >= 2) {
+        const topCount = Math.min(5, lastRow - 1);
+        report.sheet4.head = s4.getRange(2, 1, topCount, 7).getValues();
+        const btmCount = Math.min(5, lastRow - 1);
+        report.sheet4.tail = s4.getRange(Math.max(2, lastRow - btmCount + 1), 1, btmCount, 7).getValues();
+      }
 
+      const validations = [];
+      for (let c = 1; c <= 7; c++) {
+        const rule = s4.getRange(2, c).getDataValidation();
+        validations.push({
+          col: c,
+          hasRule: !!rule,
+          criteriaType: rule ? String(rule.getCriteriaType()) : null
+        });
+      }
+      report.sheet4.validations = validations;
+    }
+
+    if (s5) {
+      report.sheet5.lastRow = s5.getLastRow();
+    }
+    if (s7) {
+      report.sheet7.lastRow = s7.getLastRow();
+    }
+
+    return {
+      success: true,
+      report: report
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || '診斷執行失敗'
+    };
+  }
+}
+
+/**
+ * 檢查並修復分頁「4. 儲蓄與分配紀錄」中因格式設定或預設驗證導致資料被寫在第 500+ 列的落單紀錄，
+ * 自動將其移回從第 2 列起連續排列。
+ */
+function fixRecordSheetRowPosition() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+    const sheet = ss.getSheetByName(SHEET_NAMES.RECORD);
+    if (!sheet) throw new Error(`找不到分頁: ${SHEET_NAMES.RECORD}`);
+
+    const maxRows = sheet.getMaxRows();
+    if (maxRows < 2) return { success: true, message: '分頁列數小於 2，無需調整' };
+
+    const lastRow = sheet.getLastRow();
+    const rowsToCheck = Math.max(lastRow, 2) - 1;
+    const allValues = sheet.getRange(2, 1, rowsToCheck, 7).getValues();
+
+    const validRows = [];
+    const strayRowIndexes = [];
+
+    for (let i = 0; i < allValues.length; i++) {
+      const row = allValues[i];
+      const actualRowNumber = i + 2;
+      const date = row[0];
+      const bank = String(row[1] || '').trim();
+      const income = row[5];
+      const expense = row[6];
+
+      const hasDate = date !== '' && date !== null;
+      const hasBank = bank !== '';
+      const hasAmount = (income !== '' && income !== null && Number(income) > 0) ||
+                        (expense !== '' && expense !== null && Number(expense) > 0);
+
+      if (hasDate || hasBank || hasAmount) {
+        validRows.push(row);
+        if (actualRowNumber > validRows.length + 1) {
+          strayRowIndexes.push(actualRowNumber);
+        }
+      }
+    }
+
+    if (validRows.length === 0) {
+      return {
+        success: true,
+        message: '分頁 4 目前尚無任何已填寫的交易資料。'
+      };
+    }
+
+    if (strayRowIndexes.length === 0) {
+      return {
+        success: true,
+        message: `分頁 4 目前共有 ${validRows.length} 筆資料，且已依序從第 2 列起排列正常。`
+      };
+    }
+
+    // 將所有有效資料依序重新寫入第 2 列起
+    sheet.getRange(2, 1, validRows.length, 7).setValues(validRows);
+
+    // 清除原本被填寫在下方的落單列
+    const rowsToClear = rowsToCheck - validRows.length;
+    if (rowsToClear > 0) {
+      sheet.getRange(validRows.length + 2, 1, rowsToClear, 7).clearContent();
+    }
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      movedCount: validRows.length,
+      strayOriginalRows: strayRowIndexes,
+      message: `已成功將位於第 ${strayRowIndexes.join(', ')} 列的 ${validRows.length} 筆交易紀錄自動移回從第 2 列起連續排列！`
+    };
+  } catch (error) {
+    Logger.log('fixRecordSheetRowPosition 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '重整交易紀錄列位置失敗'
+    };
+  }
+}

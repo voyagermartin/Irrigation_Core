@@ -35,7 +35,9 @@
 ## ④ Function Library
 * `doGet(e)`: 渲染主介面 (`form.html`)。
 * `getAccountOptions()`: 讀取分頁 5、分頁 8 與分頁 7，動態回傳當前餘額、總資產淨值、信用卡選單 (`creditCards`)、扣款名目 (`deductPurposes`)、消費項目 (`creditItems`) 與支付通道 (`creditChannels`)。
-* `recordTransaction(payload)`: 單筆記帳與資金平移（拆解轉出/轉入雙筆紀錄）寫入分頁 4。
+* `recordTransaction(payload)`: 單筆記帳與資金平移（拆解轉出/轉入雙筆紀錄）寫入分頁 4（全面採用 `getNextEmptyRecordRow` 動態向下搜尋第一個「交易日期與實體銀行皆為空」之真正空白列，支援動態擴展列、格式自動校正與 `SpreadsheetApp.flush()`）。
+* `diagnoseSystem()`: 全域健康度診斷 API，即時檢測分頁 4/5/7 實際列數、首個空白列、落單紀錄及各欄位資料驗證規則。
+* `fixRecordSheetRowPosition()`: 檢查並將分頁 4 中因開口式驗證或格式跳寫至下方的落單交易紀錄，自動重整移回從第 2 列起連續排列。
 * `recordCreditCardTransaction(payload)`: 寫入分頁 7 信用卡明細（自動定位首個空白列、清除 B 欄舊驗證、預設支出名目為日常開銷、配置 Checkbox 與待撥款狀態）。
 * `getCreditCardTransactions(limit, statusFilter)`: 讀取分頁 7 最新 N 筆明細，回傳每筆資料之實際列號 (`rowIndex`)、核對與撥款狀態、全表待撥總額 (`totalPending`) 及各名目待撥款額統計 (`pendingByPurpose`)。
 * `batchUpdateCreditCardTransfer(rowIndices, transferDate)`: 接收前端傳入的試算表列號陣列，批次將分頁 7 H 欄撥款狀態更新為「已撥款」並填入 I 欄調度日期。
@@ -66,6 +68,10 @@
    * B 欄（消費日期）為純日期格式，禁止殘留舊發卡銀行驗證，消除「值必須介於指定範圍之間」之紅標。
    * 新刷卡寫入時動態向下搜尋首個消費日期與發卡行皆為空之空白列，杜絕跳至 500+ 列。
    * E 欄（消費項目）與 F 欄（支付通道）驗證清單保持獨立解耦，不共用同一規則。
+8. **一般資金交易寫入定位與表單驗證原則**:
+   * **後端首個空白列定位**：分頁 4 廢除易受格式影響的 `appendRow()`，改以 `getNextEmptyRecordRow()` 尋找真正空白列，杜絕跳寫。
+   * **前端主動式驗證 (Active Toast Validation)**：表單配置 `novalidate`，避開行動端與 iframe 內建驗證靜默失效問題；由 JavaScript 進行欄位防呆並提供清楚 Toast 錯誤提示。
+   * **智慧單選預填 (Auto-Select)**：當選擇銀行/戶頭後若僅有單一選項，自動預選並觸發連動，減少手機操作步驟。
 
 ---
 
@@ -83,8 +89,8 @@
 ---
 
 ## ⑦ Version & Roadmap
-* **當前版本**: **`v1.5.0-final`** (信用卡全端完整閉環：消費錄入、名目待撥統計看板、Chips 點擊切換篩選與手機端勾選批次撥款)
-* **GAS 部署**: Release `@46`
+* **當前版本**: **`v1.5.1`** (一般資金動作全面強化：動態空白列精準寫入、表單防呆 Toast 提昇、智慧單選代入與全表診斷 API)
+* **GAS 部署**: Release `@55`
 * **里程碑路線圖**:
   * [x] **v1.0.0**: 雙維架構確立、單筆與資金平移、GitHub Pages 無標籤包裹層。
   * [x] **v1.1.0**: 餘額查詢模式、總資產淨值卡片與即時餘額 Badge。
@@ -101,6 +107,13 @@
 ---
 
 ## ⑧ Changelog (Major Releases)
+* **v1.5.1 (2026/11/01)**:
+  * 修正一般資金動作（單筆記帳與資金平移）寫入定位：廢除 `sheet.appendRow`，改採 `getNextEmptyRecordRow` 動態向下搜尋第一個真正的空白列寫入，杜絕受開口驗證影響跳寫。
+  * 前端表單增加 `novalidate`，杜絕 iOS Safari / Android Chrome 在 PWA iframe 內建原生驗證靜默阻擋提交之問題。
+  * 前端新增完整 JavaScript 主動式驗證與 Toast 警示，精準指引未選欄位（日期、銀行、戶頭、名目、金額）。
+  * 新增單一選項智慧自動預選（銀行僅 1 個戶頭或戶頭僅 1 個名目時自動選取並觸發餘額更新）。
+  * 擴充 `getRecentTransactions` 支援跳過全空白列，避免紀錄查詢呈現空卡片。
+  * 後端新增全域診斷 API `diagnoseSystem` 與分頁 4 自動重整工具 `fixRecordSheetRowPosition`。
 * **v1.5.0-final (2026/11/01)**:
   * 後端擴充 `getCreditCardTransactions`，回傳每筆紀錄之試算表實際列號 `rowIndex`、`totalPending` 與各名目統計 `pendingByPurpose`。
   * 後端新增 `batchUpdateCreditCardTransfer` API，接收列號陣列批次將狀態更新為「已撥款」並寫入調度日期。

@@ -1028,7 +1028,7 @@
         </div>
 
         <!-- ================= 交易記帳 表單 ================= -->
-        <form id="tx-form" onsubmit="handleFormSubmit(event)">
+        <form id="tx-form" novalidate onsubmit="handleFormSubmit(event)">
         <!-- 交易日期 -->
         <div class="form-group" id="tx-date-group">
           <label class="form-label" for="tx-date">交易日期</label>
@@ -1889,6 +1889,14 @@
       accountElem.innerHTML = '<option value="">選擇戶頭</option>' +
         filteredAccounts.map(a => `<option value="${a}">${a}</option>`).join('');
       accountElem.disabled = false;
+
+      // 若該銀行只有一個戶頭，自動代入
+      if (filteredAccounts.length === 1) {
+        accountElem.value = filteredAccounts[0];
+        if (accountElemId === 'single-account') onSingleAccountChange();
+        if (accountElemId === 'from-account') onFromAccountChange();
+        if (accountElemId === 'to-account') onToAccountChange();
+      }
     }
 
     function updatePurposeOptions(selectedBank, selectedAccount, purposeElemId) {
@@ -1907,6 +1915,11 @@
         purposeElem.innerHTML = '<option value="">選擇名目用途</option>' +
           filteredPurposes.map(p => `<option value="${p}">${p}</option>`).join('');
         purposeElem.disabled = false;
+
+        // 若該戶頭只有一個名目，自動代入
+        if (filteredPurposes.length === 1) {
+          purposeElem.value = filteredPurposes[0];
+        }
       }
 
       if (purposeElemId === 'single-purpose') onSinglePurposeChange();
@@ -2020,6 +2033,15 @@
       }
 
       // ================= 單筆記帳 / 資金平移模式 =================
+      if (!date) {
+        showToast('請選擇交易日期', 'error');
+        return;
+      }
+      if (!amount || Number(amount) <= 0) {
+        showToast('請輸入大於 0 的有效金額', 'error');
+        return;
+      }
+
       let payload = {
         mode: currentMode,
         date: date,
@@ -2028,24 +2050,70 @@
       };
 
       if (currentMode === 'single') {
-        payload.type = currentType;
-        payload.bank = document.getElementById('single-bank').value;
-        payload.account = document.getElementById('single-account').value;
-        payload.purpose = document.getElementById('single-purpose').value;
-      } else {
-        payload.fromBank = document.getElementById('from-bank').value;
-        payload.fromAccount = document.getElementById('from-account').value;
-        payload.fromPurpose = document.getElementById('from-purpose').value;
-        payload.toBank = document.getElementById('to-bank').value;
-        payload.toAccount = document.getElementById('to-account').value;
-        payload.toPurpose = document.getElementById('to-purpose').value;
+        const bank = document.getElementById('single-bank').value;
+        const account = document.getElementById('single-account').value;
+        const purpose = document.getElementById('single-purpose').value;
 
-        if (payload.fromBank === payload.toBank &&
-            payload.fromAccount === payload.toAccount &&
-            payload.fromPurpose === payload.toPurpose) {
+        if (!bank) {
+          showToast('請選擇銀行', 'error');
+          return;
+        }
+        if (!account) {
+          showToast('請選擇戶頭', 'error');
+          return;
+        }
+        if (!purpose) {
+          showToast('請選擇名目用途', 'error');
+          return;
+        }
+
+        payload.type = currentType;
+        payload.bank = bank;
+        payload.account = account;
+        payload.purpose = purpose;
+      } else {
+        const fromBank = document.getElementById('from-bank').value;
+        const fromAccount = document.getElementById('from-account').value;
+        const fromPurpose = document.getElementById('from-purpose').value;
+        const toBank = document.getElementById('to-bank').value;
+        const toAccount = document.getElementById('to-account').value;
+        const toPurpose = document.getElementById('to-purpose').value;
+
+        if (!fromBank) {
+          showToast('請選擇轉出銀行', 'error');
+          return;
+        }
+        if (!fromAccount) {
+          showToast('請選擇轉出戶頭', 'error');
+          return;
+        }
+        if (!fromPurpose) {
+          showToast('請選擇轉出名目', 'error');
+          return;
+        }
+        if (!toBank) {
+          showToast('請選擇轉入銀行', 'error');
+          return;
+        }
+        if (!toAccount) {
+          showToast('請選擇轉入戶頭', 'error');
+          return;
+        }
+        if (!toPurpose) {
+          showToast('請選擇轉入名目', 'error');
+          return;
+        }
+        if (fromBank === toBank && fromAccount === toAccount && fromPurpose === toPurpose) {
           showToast('轉出與轉入帳戶不能完全相同', 'error');
           return;
         }
+
+        payload.fromBank = fromBank;
+        payload.fromAccount = fromAccount;
+        payload.fromPurpose = fromPurpose;
+        payload.toBank = toBank;
+        payload.toAccount = toAccount;
+        payload.toPurpose = toPurpose;
       }
 
       setSubmittingState(true);
