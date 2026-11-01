@@ -383,8 +383,10 @@ function recordCreditCardTransaction(payload) {
       .build();
     sheet.getRange(targetRow, 1).setDataValidation(checkboxRule).setHorizontalAlignment('center');
 
-    // 確保 B 欄日期與 G 欄金額格式
+    // 確保 B 欄日期清除舊資料驗證（避免歷史發卡銀行範圍驗證殘留），並設定格式
+    sheet.getRange(targetRow, 2).clearDataValidations();
     sheet.getRange(targetRow, 2).setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+    sheet.getRange(targetRow, 7).clearDataValidations();
     sheet.getRange(targetRow, 7).setNumberFormat('#,##0');
     sheet.getRange(targetRow, 8).setHorizontalAlignment('center');
 
@@ -992,7 +994,8 @@ function upgradeCreditCardCheckMechanism() {
       .setHorizontalAlignment('center');
 
     // 3. 欄位格式化與資料驗證
-    // B 欄 (消費日期): 日期格式
+    // B 欄 (消費日期): 清除歷史發卡銀行驗證，並設定日期格式
+    recordSheet.getRange('B2:B500').clearDataValidations();
     recordSheet.getRange('B2:B500')
       .setNumberFormat('yyyy/mm/dd')
       .setHorizontalAlignment('center');
@@ -1478,8 +1481,10 @@ function refreshCardAccountDropdowns() {
 }
 
 /**
- * 一次性修復/分離分頁「7. 信用卡消費明細」中 E 欄（消費項目）與 F 欄（支付通道）的下拉選單：
- * 避免因歷史欄位位移導致 Google Sheets 自動合併二者資料驗證規則。
+ * 一次性修復/分離分頁「7. 信用卡消費明細」之所有欄位資料驗證：
+ * 1. 徹底清除 B 欄（消費日期）殘留的舊發卡銀行驗證（消除「輸入的值必須介於指定的範圍之間」警告）
+ * 2. 獨立配置 E 欄（消費項目）與 F 欄（支付通道）之驗證清單
+ * 3. 清除 G、I、J、L 欄非下拉欄位的多餘驗證
  */
 function fixCreditCardSheetValidation() {
   try {
@@ -1488,11 +1493,24 @@ function fixCreditCardSheetValidation() {
     const recordSheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
     if (!recordSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
 
-    // 1. 先清除 E 欄與 F 欄的所有舊資料驗證，徹底解除兩欄在 Google Sheets 內部的規則綁定
-    recordSheet.getRange('E2:E1000').clearDataValidations();
-    recordSheet.getRange('F2:F1000').clearDataValidations();
+    const cardSheet = ss.getSheetByName(SHEET_NAMES.CC_CARDS);
+    const assetSheet = ss.getSheetByName(SHEET_NAMES.ASSET);
 
-    // 2. E 欄（消費項目）：配置常用項目清單，並允許自訂值輸入
+    // 1. 徹底清除 B 欄（消費日期）殘留的舊發卡銀行驗證，並設定日期格式
+    recordSheet.getRange('B2:B1000').clearDataValidations();
+    recordSheet.getRange('B2:B1000').setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+
+    // 2. 清除 G (金額), I (調度日), J (週期), L (備註) 的多餘驗證
+    recordSheet.getRange('G2:G1000').clearDataValidations();
+    recordSheet.getRange('G2:G1000').setNumberFormat('#,##0');
+    recordSheet.getRange('I2:I1000').clearDataValidations();
+    recordSheet.getRange('I2:I1000').setNumberFormat('yyyy/mm/dd').setHorizontalAlignment('center');
+    recordSheet.getRange('J2:J1000').clearDataValidations();
+    recordSheet.getRange('J2:J1000').setNumberFormat('@').setHorizontalAlignment('center');
+    recordSheet.getRange('L2:L1000').clearDataValidations();
+
+    // 3. E 欄（消費項目）：清除舊驗證，配置獨立常用清單
+    recordSheet.getRange('E2:E1000').clearDataValidations();
     const commonItems = ['悠遊卡加值', '台鐵票', '高鐵票', '超商消費', '外食餐飲', '日常用品', '生鮮超市', '加油', '訂閱服務', '其他'];
     const itemRule = SpreadsheetApp.newDataValidation()
       .requireValueInList(commonItems, true)
@@ -1500,7 +1518,8 @@ function fixCreditCardSheetValidation() {
       .build();
     recordSheet.getRange('E2:E1000').setDataValidation(itemRule);
 
-    // 3. F 欄（支付通道）：配置獨立的支付通道清單
+    // 4. F 欄（支付通道）：清除舊驗證，配置獨立支付通道清單
+    recordSheet.getRange('F2:F1000').clearDataValidations();
     const channels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
     const channelRule = SpreadsheetApp.newDataValidation()
       .requireValueInList(channels, true)
@@ -1508,11 +1527,41 @@ function fixCreditCardSheetValidation() {
       .build();
     recordSheet.getRange('F2:F1000').setDataValidation(channelRule);
 
+    // 5. 確保 C 欄（發卡銀行）與 D 欄（卡片）連動分頁 8
+    if (cardSheet) {
+      const bankRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(cardSheet.getRange('A2:A'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('C2:C1000').setDataValidation(bankRule);
+
+      const cardRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(cardSheet.getRange('D2:D'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('D2:D1000').setDataValidation(cardRule);
+    }
+
+    // 6. 確保 H 欄（撥款狀態）與 K 欄（扣款名目）
+    const dispatchRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['待撥款', '已撥款'], true)
+      .setAllowInvalid(false)
+      .build();
+    recordSheet.getRange('H2:H1000').setDataValidation(dispatchRule).setHorizontalAlignment('center');
+
+    if (assetSheet) {
+      const purposeRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(assetSheet.getRange('C5:C'), true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('K2:K1000').setDataValidation(purposeRule);
+    }
+
     SpreadsheetApp.flush();
-    Logger.log('分頁 7 消費項目與支付通道資料驗證已成功獨立分離！');
+    Logger.log('分頁 7 所有欄位資料驗證已徹底重整與修復完畢！（B欄舊發卡銀行驗證已清除）');
     return {
       success: true,
-      message: '分頁 7 消費項目與支付通道資料驗證已成功獨立分離！'
+      message: '分頁 7 所有欄位資料驗證已徹底重整與修復完畢！（B欄舊發卡銀行驗證已清除）'
     };
   } catch (error) {
     Logger.log('fixCreditCardSheetValidation 失敗: ' + error.message);
