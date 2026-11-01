@@ -1157,6 +1157,8 @@
     let accountRawData = [];
     let creditCardOptions = [];
     let deductPurposes = [];
+    let creditItems = [];
+    let creditChannels = [];
     let totalNetWorth = 0;
     let recentTransactions = [];
     let isHistoryLoaded = false;
@@ -1324,6 +1326,8 @@
       accountRawData = response.data || [];
       creditCardOptions = response.creditCards || [];
       deductPurposes = response.deductPurposes || [];
+      creditItems = response.creditItems || [];
+      creditChannels = response.creditChannels || [];
       totalNetWorth = response.totalNetWorth || 0;
 
       const totalElem = document.getElementById('total-net-worth');
@@ -1380,6 +1384,28 @@
           }).join('');
         }
         ccPurposeElem.innerHTML = purposeHtml;
+      }
+
+      // 動態更新支付通道選項（從分頁 7 資料驗證連動）
+      const ccChannelElem = document.getElementById('cc-channel');
+      if (ccChannelElem && creditChannels && creditChannels.length > 0) {
+        const curChannel = ccChannelElem.value;
+        ccChannelElem.innerHTML = creditChannels.map(ch => {
+          const isSelected = ch === curChannel ? ' selected' : '';
+          return `<option value="${ch}"${isSelected}>${ch}</option>`;
+        }).join('');
+      }
+
+      // 動態更新消費項目選項（從分頁 7 資料驗證連動）
+      const ccItemElem = document.getElementById('cc-item');
+      if (ccItemElem && creditItems && creditItems.length > 0) {
+        const curItem = ccItemElem.value;
+        let itemHtml = '<option value="">請選擇消費項目</option>';
+        itemHtml += creditItems.map(it => {
+          const isSelected = it === curItem ? ' selected' : '';
+          return `<option value="${it}"${isSelected}>${it}</option>`;
+        }).join('');
+        ccItemElem.innerHTML = itemHtml;
       }
     }
 

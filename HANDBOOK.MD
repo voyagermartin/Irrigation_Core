@@ -34,7 +34,7 @@
 
 ## ④ Function Library
 * `doGet(e)`: 渲染主介面 (`form.html`)。
-* `getAccountOptions()`: 讀取分頁 5 與分頁 8，回傳當前餘額、總資產淨值、信用卡選單 (`creditCards`) 與扣款名目 (`deductPurposes`)。
+* `getAccountOptions()`: 讀取分頁 5、分頁 8 與分頁 7，動態回傳當前餘額、總資產淨值、信用卡選單 (`creditCards`)、扣款名目 (`deductPurposes`)、消費項目 (`creditItems`) 與支付通道 (`creditChannels`)。
 * `recordTransaction(payload)`: 單筆記帳與資金平移（拆解轉出/轉入雙筆紀錄）寫入分頁 4。
 * `recordCreditCardTransaction(payload)`: 寫入分頁 7 信用卡明細（自動配置 Checkbox、格式與待撥款狀態）。
 * `getCreditCardTransactions(limit, statusFilter)`: 讀取「7. 信用卡消費明細」最新 N 筆資料（預設 30 筆），倒序回傳包含消費詳情、核對狀態、撥款狀態與待撥款總額 (`pendingAmount`) 之 JSON。

@@ -107,12 +107,61 @@ function getAccountOptions() {
     });
     const deductPurposes = Array.from(purposeSet);
 
+    // 讀取「7. 信用卡消費明細」，動態提取消費項目 (E 欄) 與支付通道 (F 欄) 的資料驗證選項
+    const recordSheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    let creditItems = [];
+    let creditChannels = [];
+
+    function extractValidationOptions(range) {
+      if (!range) return [];
+      try {
+        const val = range.getDataValidation();
+        if (!val) return [];
+        const type = val.getCriteriaType();
+        const vals = val.getCriteriaValues();
+        if (type === SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST && vals && vals[0]) {
+          return vals[0].map(v => String(v || '').trim()).filter(Boolean);
+        } else if (type === SpreadsheetApp.DataValidationCriteria.VALUE_IN_RANGE && vals && vals[0]) {
+          const rangeVals = vals[0].getValues();
+          return rangeVals.map(r => String(r[0] || '').trim()).filter(Boolean);
+        }
+      } catch (err) {
+        Logger.log('extractValidationOptions 讀取異常: ' + err.message);
+      }
+      return [];
+    }
+
+    if (recordSheet) {
+      creditItems = extractValidationOptions(recordSheet.getRange('E2'));
+      if (creditItems.length === 0) {
+        creditItems = extractValidationOptions(recordSheet.getRange('E3'));
+      }
+
+      creditChannels = extractValidationOptions(recordSheet.getRange('F2'));
+      if (creditChannels.length === 0) {
+        creditChannels = extractValidationOptions(recordSheet.getRange('F3'));
+      }
+    }
+
+    // 若未設定或讀取為空，提供預設選項安全 fallback
+    if (!creditItems || creditItems.length === 0) {
+      creditItems = ['悠遊卡加值', '台鐵票', '高鐵票', '超商消費', '外食餐飲', '日常用品', '生鮮超市', '加油', '訂閱服務', '其他'];
+    }
+    if (!creditChannels || creditChannels.length === 0) {
+      creditChannels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
+    }
+
+    creditItems = [...new Set(creditItems)];
+    creditChannels = [...new Set(creditChannels)];
+
     return {
       success: true,
       data: optionsMap,
       totalNetWorth: totalNetWorth,
       creditCards: creditCards,
-      deductPurposes: deductPurposes
+      deductPurposes: deductPurposes,
+      creditItems: creditItems,
+      creditChannels: creditChannels
     };
   } catch (error) {
     return {
