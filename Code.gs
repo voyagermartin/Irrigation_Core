@@ -318,9 +318,34 @@ function recordCreditCardTransaction(payload) {
     // 計算帳單週期 (若有傳入則使用，否則依據消費日期預設為 YYYY-MM)
     const billCycle = payload.billCycle || formattedDate.substring(0, 7).replace('/', '-');
 
-    // 取得寫入位置（新的一列）
+    // 取得寫入位置：從第 2 列起往下搜尋第一個「消費日期與發卡銀行皆為空」的真正空白列
+    // 避免因 A 欄 Checkbox 或預設驗證導致 getLastRow 誤判為 500+ 列
+    let targetRow = 2;
+    const maxRows = sheet.getMaxRows();
     const lastRow = sheet.getLastRow();
-    const targetRow = Math.max(lastRow + 1, 2);
+    const rowsToCheck = Math.max(lastRow, 2) - 1;
+
+    if (rowsToCheck > 0) {
+      const checkValues = sheet.getRange(2, 2, rowsToCheck, 2).getValues();
+      let foundEmpty = false;
+      for (let i = 0; i < checkValues.length; i++) {
+        const d = checkValues[i][0];
+        const b = checkValues[i][1];
+        if ((d === '' || d === null || d === undefined) &&
+            (b === '' || b === null || b === undefined)) {
+          targetRow = i + 2;
+          foundEmpty = true;
+          break;
+        }
+      }
+      if (!foundEmpty) {
+        targetRow = rowsToCheck + 2;
+      }
+    }
+
+    if (targetRow > maxRows) {
+      sheet.insertRowsAfter(maxRows, targetRow - maxRows);
+    }
 
     // 12 欄結構定義：
     // A: 帳單核對 (FALSE)
@@ -1494,6 +1519,83 @@ function fixCreditCardSheetValidation() {
     return {
       success: false,
       error: error.message || '修復資料驗證失敗'
+    };
+  }
+}
+
+/**
+ * 檢查並修復分頁「7. 信用卡消費明細」中因 Checkbox 或預設驗證導致資料被寫在第 500+ 列的落單紀錄，
+ * 自動將其移回從第 2 列起連續排列。
+ */
+function fixCreditCardRecordsRowPosition() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+    const sheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!sheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+
+    const maxRows = sheet.getMaxRows();
+    if (maxRows < 2) return { success: true, message: '分頁列數小於 2，無需調整' };
+
+    // 讀取從第 2 列到最後一列的所有資料 (12 欄: A~L)
+    const allValues = sheet.getRange(2, 1, maxRows - 1, 12).getValues();
+
+    const validRows = [];
+    const strayRowIndexes = [];
+
+    for (let i = 0; i < allValues.length; i++) {
+      const row = allValues[i];
+      const actualRowNumber = i + 2;
+      const date = row[1];
+      const bank = String(row[2] || '').trim();
+      const card = String(row[3] || '').trim();
+      const amount = Number(row[6]) || 0;
+
+      // 若有消費日期、發卡銀行或金額，視為有效交易紀錄
+      if (date || bank || card || amount > 0) {
+        validRows.push(row);
+        if (actualRowNumber > validRows.length + 1) {
+          strayRowIndexes.push(actualRowNumber);
+        }
+      }
+    }
+
+    if (validRows.length === 0) {
+      return {
+        success: true,
+        message: '分頁 7 目前尚無任何已填寫的刷卡資料。'
+      };
+    }
+
+    if (strayRowIndexes.length === 0) {
+      return {
+        success: true,
+        message: `分頁 7 目前共有 ${validRows.length} 筆資料，且已依序從第 2 列起排列正常。`
+      };
+    }
+
+    // 將所有有效資料依序重新寫入第 2 列起
+    sheet.getRange(2, 1, validRows.length, 12).setValues(validRows);
+
+    // 清除原本被填寫在下方的落單列 (從 validRows.length + 2 列到 maxRows)
+    const rowsToClear = maxRows - validRows.length - 1;
+    if (rowsToClear > 0) {
+      sheet.getRange(validRows.length + 2, 1, rowsToClear, 12).clearContent();
+    }
+
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      movedCount: validRows.length,
+      strayOriginalRows: strayRowIndexes,
+      message: `已成功將位於第 ${strayRowIndexes.join(', ')} 列的 ${validRows.length} 筆刷卡紀錄自動移回從第 2 列起排列！`
+    };
+  } catch (error) {
+    Logger.log('fixCreditCardRecordsRowPosition 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '重整刷卡紀錄列位置失敗'
     };
   }
 }

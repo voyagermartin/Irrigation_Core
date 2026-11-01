@@ -44,6 +44,7 @@
   2. 分頁 5 新增/修改銀行帳戶時，即時全域刷新分頁 7 與分頁 8 驗證清單。
 * `refreshCardAccountDropdowns()`: 全域掃描分頁 5，動態刷新分頁 8 扣繳帳戶及分頁 7 下拉選單。
 * `fixCreditCardSheetValidation()`: 清除並獨立配置分頁 7 E 欄（消費項目）與 F 欄（支付通道）之資料驗證，解除 Google Sheets 內部共用規則綁定。
+* `fixCreditCardRecordsRowPosition()`: 檢查並將因 Checkbox 或預設驗證誤寫至 500+ 列的落單刷卡紀錄，自動平移重整回從第 2 列起排列。
 * `batchMarkAsTransferred(targetBank, transferDate)`: 批次將指定銀行所有已核對之待撥款消費更新為「已撥款」並填入調度日。
 * `archiveAndCompressYearly()`: 自動化年終封存：備份分頁 4 至獨立試算表檔、固化分頁 5 E 欄餘額至 D 欄並清空流水帳。
 
