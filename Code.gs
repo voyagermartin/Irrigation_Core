@@ -819,81 +819,8 @@ function initCreditCardSheetsWithAutoBanks() {
     cardSheet.setColumnWidth(9, 90);  // 狀態
     cardSheet.setColumnWidth(10, 180); // 備註/權益
 
-    // 3. 建立分頁：「7. 信用卡消費明細」
-    let recordSheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
-    if (!recordSheet) {
-      recordSheet = ss.insertSheet(SHEET_NAMES.CC_RECORD);
-    }
-
-    recordSheet.setFrozenRows(1);
-
-    const recordHeaders = [
-      '消費日期', '發卡銀行', '卡片', '消費項目', '支付通道',
-      '消費金額', '調度日期', '調度狀態', '帳單所屬月份', '對應扣款名目', '備註'
-    ];
-
-    const recordHeaderRange = recordSheet.getRange(1, 1, 1, recordHeaders.length);
-    recordHeaderRange.setValues([recordHeaders])
-      .setBackground(headerBgColor)
-      .setFontColor(headerFontColor)
-      .setFontWeight('bold')
-      .setHorizontalAlignment('center');
-
-    // 資料驗證設定
-    // B 欄（發卡銀行）連動分頁 8 的 A 欄
-    const cardBankRule = SpreadsheetApp.newDataValidation()
-      .requireValueInRange(cardSheet.getRange('A2:A100'), true)
-      .setAllowInvalid(true)
-      .build();
-    recordSheet.getRange('B2:B500').setDataValidation(cardBankRule);
-
-    // C 欄（卡片）連動分頁 8 的 D 欄（卡片辨識全名）
-    const cardNameRule = SpreadsheetApp.newDataValidation()
-      .requireValueInRange(cardSheet.getRange('D2:D100'), true)
-      .setAllowInvalid(true)
-      .build();
-    recordSheet.getRange('C2:C500').setDataValidation(cardNameRule);
-
-    // E 欄（支付通道）
-    const paymentChannels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
-    const channelRule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(paymentChannels, true)
-      .setAllowInvalid(true)
-      .build();
-    recordSheet.getRange('E2:E500').setDataValidation(channelRule);
-
-    // H 欄（調度狀態）
-    const dispatchRule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(['待調度', '已調度'], true)
-      .setAllowInvalid(false)
-      .build();
-    recordSheet.getRange('H2:H500').setDataValidation(dispatchRule);
-
-    // J 欄（對應扣款名目）連動分頁 5 的 C 欄名目用途 (C5:C100)
-    const purposeRule = SpreadsheetApp.newDataValidation()
-      .requireValueInRange(assetSheet.getRange('C5:C100'), true)
-      .setAllowInvalid(true)
-      .build();
-    recordSheet.getRange('J2:J500').setDataValidation(purposeRule);
-
-    // 格式設定
-    recordSheet.getRange('A2:A500').setNumberFormat('yyyy/mm/dd');
-    recordSheet.getRange('F2:F500').setNumberFormat('#,##0');
-    recordSheet.getRange('G2:G500').setNumberFormat('yyyy/mm/dd');
-    recordSheet.getRange('I2:I500').setNumberFormat('@'); // 文字格式
-
-    // 欄寬自訂優化
-    recordSheet.setColumnWidth(1, 110); // 消費日期
-    recordSheet.setColumnWidth(2, 110); // 發卡銀行
-    recordSheet.setColumnWidth(3, 160); // 卡片
-    recordSheet.setColumnWidth(4, 160); // 消費項目
-    recordSheet.setColumnWidth(5, 130); // 支付通道
-    recordSheet.setColumnWidth(6, 110); // 消費金額
-    recordSheet.setColumnWidth(7, 110); // 調度日期
-    recordSheet.setColumnWidth(8, 100); // 調度狀態
-    recordSheet.setColumnWidth(9, 120); // 帳單所屬月份
-    recordSheet.setColumnWidth(10, 140); // 對應扣款名目
-    recordSheet.setColumnWidth(11, 180); // 備註
+    // 3. 建立並升級分頁：「7. 信用卡消費明細」為 12 欄標準結構
+    upgradeCreditCardCheckMechanism();
 
     SpreadsheetApp.flush();
 
@@ -1014,7 +941,17 @@ function upgradeCreditCardCheckMechanism() {
       recordSheet.getRange('D2:D500').setDataValidation(cardRule);
     }
 
-    // F 欄 (支付通道): 下拉選單
+    // E 欄 (消費項目): 下拉選單（常用項目推薦，允許自由輸入自訂項目）
+    recordSheet.getRange('E2:E500').clearDataValidations();
+    const commonItems = ['悠遊卡加值', '台鐵票', '高鐵票', '超商消費', '外食餐飲', '日常用品', '生鮮超市', '加油', '訂閱服務', '其他'];
+    const itemRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(commonItems, true)
+      .setAllowInvalid(true)
+      .build();
+    recordSheet.getRange('E2:E500').setDataValidation(itemRule);
+
+    // F 欄 (支付通道): 下拉選單（獨立設定，徹底解除與 E 欄的合併）
+    recordSheet.getRange('F2:F500').clearDataValidations();
     const channels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
     const channelRule = SpreadsheetApp.newDataValidation()
       .requireValueInList(channels, true)
@@ -1424,6 +1361,21 @@ function refreshCardAccountDropdowns() {
         .build();
       recordSheet.getRange('D2:D500').setDataValidation(recCardRule);
 
+      // E 欄 (消費項目) 與 F 欄 (支付通道) 確保獨立驗證
+      const commonItems = ['悠遊卡加值', '台鐵票', '高鐵票', '超商消費', '外食餐飲', '日常用品', '生鮮超市', '加油', '訂閱服務', '其他'];
+      const recItemRule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(commonItems, true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('E2:E500').setDataValidation(recItemRule);
+
+      const channels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
+      const recChannelRule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(channels, true)
+        .setAllowInvalid(true)
+        .build();
+      recordSheet.getRange('F2:F500').setDataValidation(recChannelRule);
+
       // K 欄 (對應扣款名目) 連動分頁 5 C 欄開放範圍 C5:C
       const recPurposeRule = SpreadsheetApp.newDataValidation()
         .requireValueInRange(assetSheet.getRange('C5:C'), true)
@@ -1447,6 +1399,52 @@ function refreshCardAccountDropdowns() {
     return {
       success: false,
       error: error.message || '刷新動態下拉選單失敗'
+    };
+  }
+}
+
+/**
+ * 一次性修復/分離分頁「7. 信用卡消費明細」中 E 欄（消費項目）與 F 欄（支付通道）的下拉選單：
+ * 避免因歷史欄位位移導致 Google Sheets 自動合併二者資料驗證規則。
+ */
+function fixCreditCardSheetValidation() {
+  try {
+    const ss = getSpreadsheet();
+    if (!ss) throw new Error('無法取得試算表實例');
+    const recordSheet = ss.getSheetByName(SHEET_NAMES.CC_RECORD);
+    if (!recordSheet) throw new Error(`找不到分頁: ${SHEET_NAMES.CC_RECORD}`);
+
+    // 1. 先清除 E 欄與 F 欄的所有舊資料驗證，徹底解除兩欄在 Google Sheets 內部的規則綁定
+    recordSheet.getRange('E2:E1000').clearDataValidations();
+    recordSheet.getRange('F2:F1000').clearDataValidations();
+
+    // 2. E 欄（消費項目）：配置常用項目清單，並允許自訂值輸入
+    const commonItems = ['悠遊卡加值', '台鐵票', '高鐵票', '超商消費', '外食餐飲', '日常用品', '生鮮超市', '加油', '訂閱服務', '其他'];
+    const itemRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(commonItems, true)
+      .setAllowInvalid(true)
+      .build();
+    recordSheet.getRange('E2:E1000').setDataValidation(itemRule);
+
+    // 3. F 欄（支付通道）：配置獨立的支付通道清單
+    const channels = ['實體刷卡', 'LINE Pay', '街口支付', 'Apple Pay', '悠遊卡/一卡通', '網路購物', '其他'];
+    const channelRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(channels, true)
+      .setAllowInvalid(true)
+      .build();
+    recordSheet.getRange('F2:F1000').setDataValidation(channelRule);
+
+    SpreadsheetApp.flush();
+    Logger.log('分頁 7 消費項目與支付通道資料驗證已成功獨立分離！');
+    return {
+      success: true,
+      message: '分頁 7 消費項目與支付通道資料驗證已成功獨立分離！'
+    };
+  } catch (error) {
+    Logger.log('fixCreditCardSheetValidation 失敗: ' + error.message);
+    return {
+      success: false,
+      error: error.message || '修復資料驗證失敗'
     };
   }
 }
