@@ -72,6 +72,11 @@
    * **後端首個空白列定位**：分頁 4 廢除易受格式影響的 `appendRow()`，改以 `getNextEmptyRecordRow()` 尋找真正空白列，杜絕跳寫。
    * **前端主動式驗證 (Active Toast Validation)**：表單配置 `novalidate`，避開行動端與 iframe 內建驗證靜默失效問題；由 JavaScript 進行欄位防呆並提供清楚 Toast 錯誤提示。
    * **智慧單選預填 (Auto-Select)**：當選擇銀行/戶頭後若僅有單一選項，自動預選並觸發連動，減少手機操作步驟。
+9. **前端包裹層與原生 PWA 設計原則**:
+   * **App Shell 與動態 API 隔離**：GitHub Pages 靜態外殼（`index.html`、`manifest.json`、圖示）由 Service Worker 快取以達成秒開體驗；所有對 `script.google.com` 跨域 API 與動態交易資料採直通網路放行，杜絕帳務資料受快取干擾。
+   * **全平台安裝適配**：Manifest 採相對路徑（`./`）相容 GitHub Pages 子目錄；同時支援 Chromium 原生 `beforeinstallprompt` 一鍵安裝與 iOS Safari 動態加到主畫面指引。
+   * **獨立模式沉浸體驗**：偵測進入 `standalone` 模式後自動隱藏所有安裝提示與橫幅，保持無橫幅、無網址列的原生 App 體驗；提供 3 天略過冷卻期避免打擾。
+   * **DevOps 資源隔離**：透過 `.claspignore` 明確區隔 GitHub Pages 專屬 PWA 檔案與 Google Apps Script 雲端程式碼，確保 CI/CD 與部署彼此獨立不衝突。
 
 ---
 
