@@ -10,7 +10,7 @@
 * **數據層 (Database)**: Google Sheets（工作表：4.流水帳、5.資產淨值、6.活儲水位、7.信用卡消費、8.信用卡主檔）。
 * **邏輯層 (Backend)**: Google Apps Script (GAS)（Web App API、跨表動態驗證、`onEdit` 即時連動、年終封存壓縮）。
 * **表現層 (Frontend)**: 
-  * GitHub Pages 包裹層 (`index.html`)：無橫幅全螢幕 PWA 體驗，配置 3D 財富金幣 App Icon。
+  * GitHub Pages 包裹層 (`index.html`)：原生 PWA 獨立架構，配置 Web App Manifest (`manifest.json`)、Service Worker (`sw.js`) 離線快取 App Shell、多尺寸適配與 Maskable 圖示，支援 Android / iOS 手機瀏覽器智慧安裝與全螢幕體驗。
   * GAS Web App (`form.html`)：三主頁籤導航、三記帳模式、即時餘額 Badge、動態連動選單。
 * **安全性 (Security)**: `robots.txt` + `meta robots` 嚴格防爬；`ANYONE_ANONYMOUS` 免第三方 Cookie 限制。
 * **工具鏈 (DevOps)**: Local IDE + Git + Clasp ➔ GAS Cloud & GitHub Pages。
@@ -89,7 +89,7 @@
 ---
 
 ## ⑦ Version & Roadmap
-* **當前版本**: **`v1.5.1`** (一般資金動作全面強化：動態空白列精準寫入、表單防呆 Toast 提昇、智慧單選代入與全表診斷 API)
+* **當前版本**: **`v1.5.2`** (完整 PWA 支援：Web App Manifest、Service Worker 快取 App Shell、多尺寸適配與 Maskable 圖示、跨平台智慧安裝引導)
 * **GAS 部署**: Release `@55`
 * **里程碑路線圖**:
   * [x] **v1.0.0**: 雙維架構確立、單筆與資金平移、GitHub Pages 無標籤包裹層。
@@ -100,6 +100,8 @@
   * [x] **v1.5.0**: 信用卡模組全端上線（分頁 7/8、逐筆對帳看板、動態開放範圍驗證、Web App 刷卡輸入與頂部三頁籤重構）。
   * [x] **v1.5.0-beta**: Web App 信用卡消費紀錄查詢、未撥款總額統計 Badge 與發卡銀行即時過濾。
   * [x] **v1.5.0-final**: 各名目待撥統計看板、Chips 點擊切換篩選、待撥款勾選與手機端底部浮動批次核銷撥款。
+  * [x] **v1.5.1**: 一般資金動作全面強化（動態空白列精準寫入、表單防呆 Toast、智慧單選代入與全表診斷 API）。
+  * [x] **v1.5.2**: 完整 PWA（Progressive Web App）架構上線，支援 Android Chrome 原生安裝提示、iOS Safari 加到主畫面指引、離線 App Shell 與 Service Worker。
   * [ ] **Next Sprint**:
     * 評估 Web App 端「活儲水位監控看板」視覺化儀表板。
     * 評估信用卡「結帳週期與繳款提醒」動態推播/排程功能。
@@ -107,6 +109,13 @@
 ---
 
 ## ⑧ Changelog (Major Releases)
+* **v1.5.2 (2026/11/18)**:
+  * 建立標準 Web App Manifest (`manifest.json`)，定義 standalone 顯示模式、暗黑背景色調 (`#0f172a`) 與豐富應用類別。
+  * 生成標準 192x192、512x512 以及支援 Android 自適應圖示的 Maskable Icons。
+  * 實作 Service Worker (`sw.js`)，預快取 App Shell 靜態資源並採 Stale-While-Revalidate 策略秒開，同時對 Google Apps Script 跨域動態 API 採取直通放行，確保資料即時性。
+  * 前端包裹層 (`index.html`) 新增 PWA 智慧安裝橫幅：支援 Chromium 核心瀏覽器 `beforeinstallprompt` 一鍵安裝，並針對 iOS Safari 打造步驟指引彈窗。
+  * 自動判斷獨立 App（Standalone）模式，進入 App 後自動隱藏所有安裝提示，達成 100% 原生手機 App 體驗。
+  * 新增 `.claspignore`，精準隔離 GitHub Pages 專屬 PWA 資源與 Google Apps Script 雲端程式碼。
 * **v1.5.1 (2026/11/01)**:
   * 修正一般資金動作（單筆記帳與資金平移）寫入定位：廢除 `sheet.appendRow`，改採 `getNextEmptyRecordRow` 動態向下搜尋第一個真正的空白列寫入，杜絕受開口驗證影響跳寫。
   * 前端表單增加 `novalidate`，杜絕 iOS Safari / Android Chrome 在 PWA iframe 內建原生驗證靜默阻擋提交之問題。

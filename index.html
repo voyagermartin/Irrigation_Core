@@ -10,22 +10,37 @@
   
   <title>Irrigation_Core 資金調度</title>
   
+  <!-- PWA Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
   <!-- 感覺會賺錢的 App 圖示與 Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="shortcut icon" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-  <!-- iOS / Android 全螢幕 PWA 體驗設定 -->
+  <!-- iOS / Apple 全螢幕 PWA 體驗設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Irrigation">
+  <meta name="apple-mobile-web-app-title" content="資金調度">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+  <!-- Android / Windows PWA 色彩與體驗 -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="資金調度">
   <meta name="theme-color" content="#0f172a">
+  <meta name="msapplication-TileColor" content="#0f172a">
+  <meta name="msapplication-navbutton-color" content="#0f172a">
 
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
     html, body {
       width: 100%;
@@ -134,29 +149,275 @@
       position: fixed;
       bottom: 12px;
       right: 12px;
-      width: 28px;
-      height: 28px;
-      background: rgba(15, 23, 42, 0.6);
-      color: #64748b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 32px;
+      height: 32px;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 12px;
+      font-size: 14px;
       cursor: pointer;
-      opacity: 0.3;
-      transition: opacity 0.2s ease;
+      opacity: 0.35;
+      transition: all 0.2s ease;
       z-index: 999;
     }
 
     .reset-btn:hover {
       opacity: 1;
       color: #f8fafc;
+      transform: scale(1.08);
+    }
+
+    /* ============================================================
+       PWA 安裝橫幅 (Install Banner) & iOS 指引
+       ============================================================ */
+    .pwa-banner {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 440px;
+      background: rgba(30, 41, 59, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(234, 179, 8, 0.2);
+      z-index: 1000;
+      animation: bannerSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes bannerSlideDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    .pwa-banner-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .pwa-banner-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pwa-banner-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pwa-banner-sub {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+
+    .pwa-banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-install {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-install:active {
+      transform: scale(0.96);
+    }
+
+    .btn-dismiss {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      line-height: 1;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+
+    .btn-dismiss:hover {
+      color: #cbd5e1;
+    }
+
+    /* iOS 安裝步驟指引彈窗 */
+    .ios-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 16px;
+      z-index: 1001;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .ios-card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 440px;
+      width: 100%;
+      color: #f8fafc;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .ios-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ios-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .ios-step-num {
+      width: 22px;
+      height: 22px;
+      background: rgba(234, 179, 8, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(234, 179, 8, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .ios-icon-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #334155;
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin: 0 2px;
+    }
+
+    .btn-close-modal {
+      width: 100%;
+      padding: 12px;
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s ease;
+    }
+
+    .btn-close-modal:hover {
+      background: #475569;
     }
   </style>
 </head>
 <body>
+
+  <!-- PWA 智慧安裝橫幅 -->
+  <div id="pwa-install-banner" class="pwa-banner hidden">
+    <img src="icon-192.png" alt="Irrigation App" class="pwa-banner-icon">
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">安裝 Irrigation_Core</div>
+      <div class="pwa-banner-sub">加入主畫面，享受原生全螢幕體驗</div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button id="pwa-install-btn" class="btn-install" onclick="handlePwaInstallClick()">安裝</button>
+      <button class="btn-dismiss" title="暫時略過" onclick="dismissPwaBanner()">✕</button>
+    </div>
+  </div>
+
+  <!-- iOS 安裝指引彈窗 -->
+  <div id="ios-guide-modal" class="ios-modal-overlay hidden" onclick="closeIosGuide(event)">
+    <div class="ios-card" onclick="event.stopPropagation()">
+      <div class="ios-card-title">
+        <span>📲</span>
+        <span>將資金調度加入 iPhone 主畫面</span>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">1</div>
+        <div>點擊 Safari 底部工具列中央的 <span class="ios-icon-badge">分享 ⎋</span> 按鈕。</div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">2</div>
+        <div>在選單向上滑動，點選 <span class="ios-icon-badge">➕ 加入主畫面</span>。</div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">3</div>
+        <div>點擊右上角的「新增」，即可如原生 App 般在桌面上秒開！</div>
+      </div>
+      <button class="btn-close-modal" onclick="closeIosGuide()">我知道了</button>
+    </div>
+  </div>
 
   <!-- 滿版 Iframe 載入區 -->
   <iframe id="app-frame" class="hidden" src="about:blank" allow="geolocation; microphone; camera"></iframe>
@@ -180,13 +441,125 @@
   <script>
     const STORAGE_KEY = 'IRRIGATION_CORE_GAS_URL';
     const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxkcowM95QzDgHJqxb9ju-D6UF-BSrdtSYZXFooMaCvA5S-J8j9nrF6YcBQ5PdIZIYS/exec';
+    const PWA_DISMISS_KEY = 'IRRIGATION_PWA_DISMISSED_AT';
+
+    let deferredPrompt = null;
+    let isIosDevice = false;
+
+    // 判斷是否已經處於 PWA 獨立 App (Standalone) 模式
+    function isRunningInStandalone() {
+      return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes('android-app://')
+      );
+    }
+
+    // 註冊 Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => {
+            console.log('[PWA] Service Worker registered with scope:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('[PWA] Service Worker registration failed:', err);
+          });
+      });
+    }
+
+    // 監聽原生 PWA 安裝觸發 (Chrome, Edge, Android 等)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // 防止 Chrome 預設 mini-infobar
+      e.preventDefault();
+      deferredPrompt = e;
+
+      // 若非 standalone 且未在近期略過，顯示安裝橫幅
+      if (!isRunningInStandalone() && !isDismissedRecently()) {
+        showPwaBanner();
+      }
+    });
+
+    // 監聽使用者完成安裝事件
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] App successfully installed!');
+      hidePwaBanner();
+      deferredPrompt = null;
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       const savedUrl = localStorage.getItem(STORAGE_KEY) || DEFAULT_GAS_URL;
       if (savedUrl) {
         launchIframe(savedUrl);
       }
+
+      // 檢查 iOS 裝置
+      const ua = window.navigator.userAgent.toLowerCase();
+      isIosDevice = /iphone|ipad|ipod/.test(ua) && !/crios|fxios|optios|ucbrowser/.test(ua);
+
+      // 若在 iOS Safari 且非 standalone 模式，適時提醒安裝
+      if (isIosDevice && !isRunningInStandalone() && !isDismissedRecently()) {
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) installBtn.textContent = '加到桌面';
+        showPwaBanner();
+      }
     });
+
+    function showPwaBanner() {
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hidePwaBanner() {
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+
+    function dismissPwaBanner() {
+      hidePwaBanner();
+      // 記錄略過時間（3 天內不再主動彈出干擾）
+      try {
+        localStorage.setItem(PWA_DISMISS_KEY, Date.now().toString());
+      } catch (e) {}
+    }
+
+    function isDismissedRecently() {
+      try {
+        const dismissedAt = localStorage.getItem(PWA_DISMISS_KEY);
+        if (!dismissedAt) return false;
+        const diffDays = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60 * 24);
+        return diffDays < 3; // 3 天內略過
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function handlePwaInstallClick() {
+      if (deferredPrompt) {
+        // 原生 Android / Chrome 提示
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('[PWA] User accepted install prompt');
+          } else {
+            console.log('[PWA] User dismissed install prompt');
+          }
+          deferredPrompt = null;
+          hidePwaBanner();
+        });
+      } else if (isIosDevice) {
+        // iOS Safari 彈出步驟指引
+        document.getElementById('ios-guide-modal').classList.remove('hidden');
+      } else {
+        alert('若要安裝此 App，請點擊瀏覽器選單中的「安裝應用程式」或「加到主畫面」！');
+      }
+    }
+
+    function closeIosGuide(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('ios-guide-modal').classList.add('hidden');
+      dismissPwaBanner();
+    }
 
     function saveGasUrl(event) {
       event.preventDefault();
