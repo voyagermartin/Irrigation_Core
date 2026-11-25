@@ -990,6 +990,106 @@
       }
     }
 
+    /* Purpose Balance View Styles */
+    .purpose-card {
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .purpose-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: rgba(30, 41, 59, 0.85);
+    }
+
+    .purpose-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+    }
+
+    .purpose-card-header.has-breakdown {
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+    }
+
+    .purpose-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .purpose-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .purpose-count-badge {
+      font-size: 0.725rem;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.18);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      padding: 1px 8px;
+    }
+
+    .purpose-total-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #34d399;
+      letter-spacing: -0.3px;
+    }
+
+    .purpose-total-val.negative {
+      color: #fca5a5;
+    }
+
+    .purpose-breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 10px;
+    }
+
+    .purpose-breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding: 2px 0;
+    }
+
+    .purpose-breakdown-entity {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .purpose-breakdown-bank {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    .purpose-breakdown-amount {
+      font-weight: 700;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+    }
+
+    .purpose-breakdown-amount.negative {
+      color: #fca5a5;
+    }
+
     /* Helper utility classes */
     .hidden {
       display: none !important;
@@ -1200,8 +1300,14 @@
           <div class="total-worth-amount" id="total-net-worth">$0</div>
         </div>
 
+        <!-- 餘額查詢雙視角切換 -->
+        <div class="mode-tabs" style="margin-bottom: 16px;">
+          <button type="button" class="tab-btn active" id="tab-balance-account" onclick="switchBalanceView('account')">🏦 依實體帳戶</button>
+          <button type="button" class="tab-btn" id="tab-balance-purpose" onclick="switchBalanceView('purpose')">🎯 依名目用途</button>
+        </div>
+
         <!-- 三階連動篩選器 -->
-        <div class="filter-section">
+        <div class="filter-section" id="balance-filter-section">
           <div class="filter-title">🔍 篩選帳戶 (銀行 / 戶頭 / 名目)</div>
           <div class="select-grid">
             <select id="filter-bank" class="select-field" onchange="onFilterBankChange()">
@@ -1216,8 +1322,13 @@
           </select>
         </div>
 
-        <!-- 帳戶餘額卡片清單 -->
+        <!-- 帳戶餘額卡片清單 (依實體帳戶視角) -->
         <div id="balance-list-container" class="balance-list-container">
+          <!-- 由 JS 動態生成 -->
+        </div>
+
+        <!-- 名目用途總覽卡片清單 (依名目用途視角) -->
+        <div id="balance-purpose-container" class="balance-list-container hidden">
           <!-- 由 JS 動態生成 -->
         </div>
       </div>
@@ -1346,6 +1457,7 @@
     let currentNavTab = 'record'; // 'record' | 'balance' | 'history'
     let currentMode = 'single'; // 'single' | 'transfer' | 'credit'
     let currentType = 'expense'; // 'expense' | 'income'
+    let currentBalanceView = 'account'; // 'account' | 'purpose'
     let historySubTab = 'general'; // 'general' | 'credit'
     let accountRawData = [];
     let creditCardOptions = [];
@@ -1378,7 +1490,11 @@
       panelHistory.classList.toggle('hidden', tab !== 'history');
 
       if (tab === 'balance') {
-        renderBalanceList();
+        if (currentBalanceView === 'purpose') {
+          renderPurposeBalanceList();
+        } else {
+          renderBalanceList();
+        }
       } else if (tab === 'history') {
         if (historySubTab === 'general') {
           if (!isHistoryLoaded) loadRecentTransactions();
@@ -1541,7 +1657,11 @@
       populateCreditCardSelects();
       populateFilterSelects();
       populateTxFilterSelects();
-      renderBalanceList();
+      if (currentBalanceView === 'purpose') {
+        renderPurposeBalanceList();
+      } else {
+        renderBalanceList();
+      }
 
       // 更新現有選擇的 Badge 餘額
       onSinglePurposeChange();
@@ -1751,6 +1871,115 @@
             </div>
             <div class="balance-item-right">
               <div class="balance-item-val ${isNeg ? 'negative' : ''}">${formatCurrency(item.balance)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 切換餘額查詢視角 (實體帳戶 vs 名目用途)
+    function switchBalanceView(view) {
+      currentBalanceView = view;
+      const btnAccount = document.getElementById('tab-balance-account');
+      const btnPurpose = document.getElementById('tab-balance-purpose');
+      const filterSec = document.getElementById('balance-filter-section');
+      const accountContainer = document.getElementById('balance-list-container');
+      const purposeContainer = document.getElementById('balance-purpose-container');
+
+      if (btnAccount) btnAccount.classList.toggle('active', view === 'account');
+      if (btnPurpose) btnPurpose.classList.toggle('active', view === 'purpose');
+
+      if (view === 'account') {
+        if (filterSec) filterSec.classList.remove('hidden');
+        if (accountContainer) accountContainer.classList.remove('hidden');
+        if (purposeContainer) purposeContainer.classList.add('hidden');
+        renderBalanceList();
+      } else {
+        if (filterSec) filterSec.classList.add('hidden');
+        if (accountContainer) accountContainer.classList.add('hidden');
+        if (purposeContainer) purposeContainer.classList.remove('hidden');
+        renderPurposeBalanceList();
+      }
+    }
+
+    // 渲染名目用途總覽卡片清單 (依名目用途視角，直接展開版)
+    function renderPurposeBalanceList() {
+      const container = document.getElementById('balance-purpose-container');
+      if (!container) return;
+
+      if (!accountRawData || accountRawData.length === 0) {
+        container.innerHTML = '<div class="empty-state">尚無帳戶餘額資料</div>';
+        return;
+      }
+
+      // 依名目用途進行分組彙總
+      const purposeMap = {};
+      accountRawData.forEach(item => {
+        const rawPurpose = (item.purpose || '').trim();
+        const purposeName = rawPurpose || '未分配／一般活存';
+        if (!purposeMap[purposeName]) {
+          purposeMap[purposeName] = {
+            purpose: purposeName,
+            isUnassigned: !rawPurpose,
+            totalBalance: 0,
+            accounts: []
+          };
+        }
+        const bal = Number(item.balance) || 0;
+        purposeMap[purposeName].totalBalance += bal;
+        purposeMap[purposeName].accounts.push({
+          bank: item.bank || '',
+          account: item.account || '',
+          balance: bal
+        });
+      });
+
+      let groups = Object.values(purposeMap);
+
+      // 排除總額為 0 且無名目的項目，保持畫面乾淨
+      groups = groups.filter(g => !(g.isUnassigned && g.totalBalance === 0));
+
+      // 卡片依該名目「累計總金額」由高至低排序
+      groups.sort((a, b) => b.totalBalance - a.totalBalance);
+
+      if (groups.length === 0) {
+        container.innerHTML = '<div class="empty-state">尚無符合條件的名目用途資料</div>';
+        return;
+      }
+
+      container.innerHTML = groups.map(group => {
+        const isNeg = group.totalBalance < 0;
+        // 組成實體帳戶依餘額由高至低排序
+        const sortedAccs = [...group.accounts].sort((a, b) => b.balance - a.balance);
+
+        const breakdownHtml = sortedAccs.map(acc => {
+          const accNeg = acc.balance < 0;
+          return `
+            <div class="purpose-breakdown-row">
+              <div class="purpose-breakdown-entity">
+                <span class="purpose-breakdown-bank">🏦 ${escapeHtml(acc.bank)}</span>
+                <span class="tag-account">${escapeHtml(acc.account)}</span>
+              </div>
+              <div class="purpose-breakdown-amount ${accNeg ? 'negative' : ''}">
+                ${formatCurrency(acc.balance)}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="purpose-card">
+            <div class="purpose-card-header has-breakdown">
+              <div class="purpose-header-left">
+                <span class="purpose-title">🎯 ${escapeHtml(group.purpose)}</span>
+                <span class="purpose-count-badge">${group.accounts.length} 個帳戶</span>
+              </div>
+              <div class="purpose-total-val ${isNeg ? 'negative' : ''}">
+                ${formatCurrency(group.totalBalance)}
+              </div>
+            </div>
+            <div class="purpose-breakdown-list">
+              ${breakdownHtml}
             </div>
           </div>
         `;
